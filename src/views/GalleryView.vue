@@ -4,44 +4,44 @@ import { ref, onMounted, onUnmounted } from 'vue'
 const galleryImages = ref([
   {
     id: 1,
-    image: '/images/gallery_1.png',
-    title: '¡Logramos la cumbre!',
-    location: 'Cordillera Real, Bolivia',
+    image: '/images/vertical-img1.jpeg',
+    title: '¡Logramos el pico!',
+    location: 'Pico Cabritas',
     spanClass: 'col-span-2 row-span-2' // large square
   },
   {
     id: 2,
-    image: '/images/hero_bg.png',
-    title: 'Atardeceres Andinos',
-    location: 'Majestuoso Illimani',
+    image: '/images/cafetal-img1.jpeg',
+    title: 'Visita al Cafetal',
+    location: 'El Cafetal',
     spanClass: 'col-span-2 row-span-1' // wide horizontal
   },
   {
     id: 3,
-    image: '/images/gallery_2.png',
-    title: 'Camino Rocoso',
-    location: 'Huayna Potosí',
+    image: '/images/vertical-img3.jpeg',
+    title: 'Atardeceres Andinos',
+    location: 'Majestuosa Montaña',
     spanClass: 'col-span-1 row-span-2' // tall vertical
   },
   {
     id: 4,
-    image: '/images/gallery_3.png',
-    title: 'Vistas Infinitas',
-    location: 'Valle Central',
+    image: '/images/vertical-img2.jpeg',
+    title: 'Atardeceres Andinos',
+    location: 'Majestuosa Montaña',
     spanClass: 'col-span-1 row-span-1' // standard square
   },
   {
     id: 5,
-    image: '/images/route_green.png',
-    title: 'Naturaleza Viva',
-    location: 'Valle de las Ánimas',
+    image: '/images/vertical-img4.jpeg',
+    title: 'Montañas del valle',
+    location: 'Codo de los Andes',
     spanClass: 'col-span-1 row-span-1' // standard square
   },
   {
     id: 6,
-    image: '/images/route_snow.png',
+    image: '/images/vertical-img5.jpeg',
     title: 'Alta Montaña',
-    location: 'Nevado Condoriri',
+    location: 'Codo de los Andes',
     spanClass: 'col-span-2 row-span-2' // large square
   }
 ])

@@ -1,5 +1,15 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
+import { useSettingsStore } from './store/settings'
+import { useAuthStore } from './store/auth'
+
+const { settings, loadSettings } = useSettingsStore()
+const { isAuthenticated, logout } = useAuthStore()
+
+onMounted(async () => {
+    await loadSettings()
+})
 </script>
 
 <template>
@@ -7,7 +17,7 @@ import { RouterLink, RouterView } from 'vue-router'
     <div class="container nav-content">
       <div class="logo">
         <RouterLink to="/">
-          <span class="logo-text">CLUB CABRITAS</span>
+          <img src="/images/logoletra.png" alt="Club Cabritas" class="logo-img" />
         </RouterLink>
       </div>
       
@@ -16,9 +26,19 @@ import { RouterLink, RouterView } from 'vue-router'
         <RouterLink to="/" class="nav-item" active-class="active">Inicio</RouterLink>
         <RouterLink to="/rutas" class="nav-item" active-class="active">Rutas</RouterLink>
         <RouterLink to="/galeria" class="nav-item" active-class="active">Galería</RouterLink>
-        <RouterLink to="/admin" class="nav-item upload-btn">
-          <span>Subir Ruta</span>
-        </RouterLink>
+
+        <!-- If logged in, show Admin + Logout. Otherwise, show Login -->
+        <template v-if="isAuthenticated">
+          <RouterLink to="/admin" class="nav-item upload-btn">
+            <span>Panel Admin</span>
+          </RouterLink>
+          <button @click="logout" class="nav-item logout-btn">Cerrar Sesión</button>
+        </template>
+        <template v-else>
+          <RouterLink to="/login" class="nav-item upload-btn">
+            <span>🔒 Login</span>
+          </RouterLink>
+        </template>
       </nav>
     </div>
   </header>
@@ -72,11 +92,11 @@ import { RouterLink, RouterView } from 'vue-router'
   height: 80px;
 }
 
-.logo-text {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  letter-spacing: 1px;
+.logo-img {
+  height: 48px;
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .nav-links {
@@ -134,6 +154,25 @@ import { RouterLink, RouterView } from 'vue-router'
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(18, 53, 36, 0.2);
+}
+
+.logout-btn {
+  background: transparent;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-xl);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: var(--color-primary);
+  color: white;
+  transform: translateY(-2px);
 }
 
 .main-content {

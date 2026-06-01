@@ -10,30 +10,9 @@ export interface RouteItem {
 }
 
 // =========================================================
-// GOOGLE SHEETS API URL
-// Pega aquí la URL que te da Google Apps Script al implementar tu Web App.
-// Ejemplo: 'https://script.google.com/macros/s/AKfyc.../exec'
+// EXPRESS API endpoints
 // =========================================================
-const GOOGLE_SHEETS_URL = '' // Si está vacío, usará LocalStorage para no romper la app
-
-const defaultRoutes: RouteItem[] = [
-    {
-        id: '1',
-        title: 'Ascenso al Nevado Condoriri',
-        date: '15 de Mayo, 2026',
-        image: '/images/route_snow.png',
-        type: 'Alta Montaña',
-        description: 'Una expedición inolvidable a una de las cumbres más icónicas de la Cordillera Real.'
-    },
-    {
-        id: '2',
-        title: 'Trekking Valle de las Ánimas',
-        date: '22 de Mayo, 2026',
-        image: '/images/route_green.png',
-        type: 'Senderismo',
-        description: 'Recorrido por las increíbles y místicas formaciones geológicas a pocos minutos de La Paz.'
-    }
-]
+import { useAuthStore } from './auth'
 
 export const useRoutesStore = () => {
     const routes = ref<RouteItem[]>([])
@@ -42,22 +21,10 @@ export const useRoutesStore = () => {
     const loadRoutes = async () => {
         isLoading.value = true
         try {
-            if (GOOGLE_SHEETS_URL) {
-                const response = await fetch(GOOGLE_SHEETS_URL)
+            const response = await fetch('/api/routes')
+            if (response.ok) {
                 const data = await response.json()
-                if (data.length > 0) {
-                    routes.value = data
-                } else {
-                    routes.value = []
-                }
-            } else {
-                // Fallback a LocalStorage si no hay URL
-                const saved = localStorage.getItem('cabritas_routes')
-                if (saved) {
-                    routes.value = JSON.parse(saved)
-                } else {
-                    routes.value = [...defaultRoutes]
-                }
+                routes.value = data || []
             }
         } catch (e) {
             console.error("Error al cargar rutas:", e)
@@ -66,36 +33,64 @@ export const useRoutesStore = () => {
         }
     }
 
-    const addRoute = async (route: Omit<RouteItem, 'id'>) => {
+    const addRoute = async (formData: FormData) => {
         try {
-            if (GOOGLE_SHEETS_URL) {
-                await fetch(GOOGLE_SHEETS_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // Evita errores de CORS en peticiones a script.google
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(route)
-                })
-                // Recargar desde sheets para asegurar consistencia
-                setTimeout(() => loadRoutes(), 1000)
-            } else {
-                // Fallback LocalStorage
-                const newRoute = { ...route, id: Date.now().toString() }
-                routes.value.unshift(newRoute)
-                localStorage.setItem('cabritas_routes', JSON.stringify(routes.value))
+            const authStore = useAuthStore()
+            const response = await fetch('/api/routes', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authStore.token}`
+                },
+                body: formData
+            })
+            if (response.ok) {
+                // Recargar desde API para asegurar consistencia
+                await loadRoutes()
+                return true
             }
+            return false
         } catch (e) {
             console.error("Error guardando:", e)
+            return false
         }
     }
 
-    const deleteRoute = (id: string) => {
-        if (!GOOGLE_SHEETS_URL) {
-            routes.value = routes.value.filter(r => r.id !== id)
-            localStorage.setItem('cabritas_routes', JSON.stringify(routes.value))
+    const updateRoute = async (id: string, formData: FormData) => {
+        try {
+            const authStore = useAuthStore()
+            const response = await fetch(`/api/routes/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${authStore.token}`
+                },
+                body: formData
+            })
+            if (response.ok) {
+                await loadRoutes()
+                return true
+            }
+            return false
+        } catch (e) {
+            console.error("Error actualizando:", e)
+            return false
         }
-        // Delete in google sheets require more logic in GS, omitted for basic upload.
+    }
+
+    const deleteRoute = async (id: string) => {
+        try {
+            const authStore = useAuthStore()
+            const response = await fetch(`/api/routes/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authStore.token}`
+                }
+            })
+            if (response.ok) {
+                routes.value = routes.value.filter(r => String(r.id) !== String(id))
+            }
+        } catch (e) {
+            console.error("Error eliminando:", e)
+        }
     }
 
     return {
@@ -103,6 +98,7 @@ export const useRoutesStore = () => {
         isLoading,
         loadRoutes,
         addRoute,
+        updateRoute,
         deleteRoute
     }
 }

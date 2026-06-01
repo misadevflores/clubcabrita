@@ -20,7 +20,13 @@ const router = createRouter({
     {
       path: '/admin',
       name: 'admin',
-      component: () => import('../views/AdminView.vue')
+      component: () => import('../views/admin/AdminRoutes.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue')
     },
     {
       path: '/galeria',
@@ -30,6 +36,22 @@ const router = createRouter({
   ],
   scrollBehavior() {
     return { top: 0, behavior: 'smooth' };
+  }
+})
+
+// Navigation Guard
+import { useAuthStore } from '../store/auth'
+
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAuth) {
+    const { isAuthenticated } = useAuthStore()
+    if (!isAuthenticated.value) {
+      next({ name: 'login' })
+    } else {
+      next()
+    }
+  } else {
+    next()
   }
 })
 
