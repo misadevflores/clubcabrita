@@ -10,9 +10,14 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build"
+    "type-check": "vue-tsc --build",
+    "init-supabase": "node server/init-supabase.js",
+    "seed-data": "node server/seed-all-data.js",
+    "seed-gallery": "node server/seed-gallery-data.js",
+    "test-crud": "node server/test-crud.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.10.0",
     "cors": "^2.8.6",
@@ -21,6 +26,8 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-vue-next": "^1.0.0",
     "multer": "^2.1.1",
+    "pg": "^8.11.3",
+    "pinia": "^2.1.7",
     "sqlite": "^5.1.1",
     "sqlite3": "^6.0.1",
     "vue": "^3.5.30",

@@ -84,7 +84,8 @@ app.post('/api/login', async (req, res) => {
 // GET ROUTES (Public)
 app.get('/api/routes', async (req, res) => {
     try {
-        const routes = await getAll('SELECT * FROM routes WHERE is_published = true ORDER BY date DESC');
+        const db = await openDb();
+        const routes = await db.all('SELECT * FROM routes ORDER BY id DESC');
         res.json(routes);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -94,7 +95,8 @@ app.get('/api/routes', async (req, res) => {
 // GET SINGLE ROUTE (Public)
 app.get('/api/routes/:id', async (req, res) => {
     try {
-        const route = await getOne('SELECT * FROM routes WHERE id = $1', [req.params.id]);
+        const db = await openDb();
+        const route = await db.get('SELECT * FROM routes WHERE id = ?', [req.params.id]);
         if (!route) return res.status(404).json({ message: 'Not found' });
         res.json(route);
     } catch (err) {
@@ -111,6 +113,7 @@ app.post('/api/routes', requireAuth, upload.single('image'), async (req, res) =>
         if (req.file) {
             imageUrl = `/uploads/${req.file.filename}`;
         } else if (req.body.imageUrl) {
+            // Fallback if they pass an explicit URL instead of file
             imageUrl = req.body.imageUrl;
         }
 
@@ -118,12 +121,14 @@ app.post('/api/routes', requireAuth, upload.single('image'), async (req, res) =>
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
-        const result = await run(
-            'INSERT INTO routes (title, date, type, image, description, is_published) VALUES ($1, $2, $3, $4, $5, true) RETURNING *',
+        const db = await openDb();
+        const result = await db.run(
+            'INSERT INTO routes (title, date, type, image, description) VALUES (?, ?, ?, ?, ?)',
             [title, date, type, imageUrl, description]
         );
 
-        res.status(201).json(result.rows[0]);
+        const newRoute = await db.get('SELECT * FROM routes WHERE id = ?', [result.lastID]);
+        res.status(201).json(newRoute);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -133,7 +138,8 @@ app.post('/api/routes', requireAuth, upload.single('image'), async (req, res) =>
 app.put('/api/routes/:id', requireAuth, upload.single('image'), async (req, res) => {
     try {
         const { title, date, type, description } = req.body;
-        const route = await getOne('SELECT * FROM routes WHERE id = $1', [req.params.id]);
+        const db = await openDb();
+        const route = await db.get('SELECT * FROM routes WHERE id = ?', [req.params.id]);
         if (!route) return res.status(404).json({ message: 'Route not found' });
 
         let imageUrl = route.image;
@@ -143,12 +149,12 @@ app.put('/api/routes/:id', requireAuth, upload.single('image'), async (req, res)
             imageUrl = req.body.imageUrl;
         }
 
-        await run(
-            'UPDATE routes SET title = $1, date = $2, type = $3, image = $4, description = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6',
+        await db.run(
+            'UPDATE routes SET title = ?, date = ?, type = ?, image = ?, description = ? WHERE id = ?',
             [title || route.title, date || route.date, type || route.type, imageUrl, description || route.description, req.params.id]
         );
 
-        const updatedRoute = await getOne('SELECT * FROM routes WHERE id = $1', [req.params.id]);
+        const updatedRoute = await db.get('SELECT * FROM routes WHERE id = ?', [req.params.id]);
         res.json(updatedRoute);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -158,7 +164,8 @@ app.put('/api/routes/:id', requireAuth, upload.single('image'), async (req, res)
 // DELETE ROUTE (Protected)
 app.delete('/api/routes/:id', requireAuth, async (req, res) => {
     try {
-        await run('DELETE FROM routes WHERE id = $1', [req.params.id]);
+        const db = await openDb();
+        await db.run('DELETE FROM routes WHERE id = ?', [req.params.id]);
         res.json({ message: 'Route deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -170,7 +177,8 @@ app.delete('/api/routes/:id', requireAuth, async (req, res) => {
 // GET SETTINGS (Public)
 app.get('/api/settings', async (req, res) => {
     try {
-        const settings = await getAll('SELECT * FROM settings');
+        const db = await openDb();
+        const settings = await db.all('SELECT * FROM settings');
         const settingsObj = {};
         settings.forEach(s => { settingsObj[s.setting_key] = s.setting_value });
         res.json(settingsObj);
@@ -182,10 +190,11 @@ app.get('/api/settings', async (req, res) => {
 // UPDATE SETTINGS (Protected)
 app.put('/api/settings', requireAuth, async (req, res) => {
     try {
+        const db = await openDb();
         const settings = req.body;
         for (const [key, value] of Object.entries(settings)) {
-            await run(
-                'INSERT INTO settings (setting_key, setting_value) VALUES ($1, $2) ON CONFLICT (setting_key) DO UPDATE SET setting_value = $2',
+            await db.run(
+                'INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value',
                 [key, value]
             );
         }
@@ -200,9 +209,11 @@ app.put('/api/settings', requireAuth, async (req, res) => {
 // GET GALLERY (Public)
 app.get('/api/gallery', async (req, res) => {
     try {
-        const gallery = await getAll('SELECT * FROM gallery WHERE is_published = true ORDER BY display_order ASC');
+        const db = await openDb();
+        const gallery = await db.all('SELECT * FROM gallery WHERE is_published = 1 ORDER BY display_order ASC');
         res.json(gallery);
     } catch (err) {
+        console.error('Error fetching gallery:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -210,9 +221,11 @@ app.get('/api/gallery', async (req, res) => {
 // GET ALL GALLERY (Admin - incluye no publicadas)
 app.get('/api/gallery/admin/all', requireAuth, async (req, res) => {
     try {
-        const gallery = await getAll('SELECT * FROM gallery ORDER BY display_order ASC');
+        const db = await openDb();
+        const gallery = await db.all('SELECT * FROM gallery ORDER BY display_order ASC');
         res.json(gallery);
     } catch (err) {
+        console.error('Error fetching gallery:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -220,7 +233,8 @@ app.get('/api/gallery/admin/all', requireAuth, async (req, res) => {
 // GET SINGLE GALLERY ITEM (Public)
 app.get('/api/gallery/:id', async (req, res) => {
     try {
-        const item = await getOne('SELECT * FROM gallery WHERE id = $1', [req.params.id]);
+        const db = await openDb();
+        const item = await db.get('SELECT * FROM gallery WHERE id = ?', [req.params.id]);
         if (!item) return res.status(404).json({ message: 'Not found' });
         res.json(item);
     } catch (err) {
@@ -244,13 +258,16 @@ app.post('/api/gallery', requireAuth, upload.single('image'), async (req, res) =
             return res.status(400).json({ message: 'Title and image are required' });
         }
 
-        const result = await run(
-            'INSERT INTO gallery (title, image, description, category, display_order, is_published) VALUES ($1, $2, $3, $4, $5, true) RETURNING *',
+        const db = await openDb();
+        const result = await db.run(
+            'INSERT INTO gallery (title, image, description, category, display_order, is_published) VALUES (?, ?, ?, ?, ?, 1)',
             [title, imageUrl, description || '', category || '', display_order || 0]
         );
         
-        res.status(201).json(result.rows[0]);
+        const newItem = await db.get('SELECT * FROM gallery WHERE id = ?', [result.lastID]);
+        res.status(201).json(newItem);
     } catch (err) {
+        console.error('Error creating gallery item:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -259,7 +276,8 @@ app.post('/api/gallery', requireAuth, upload.single('image'), async (req, res) =
 app.put('/api/gallery/:id', requireAuth, upload.single('image'), async (req, res) => {
     try {
         const { title, description, category, display_order, is_published } = req.body;
-        const item = await getOne('SELECT * FROM gallery WHERE id = $1', [req.params.id]);
+        const db = await openDb();
+        const item = await db.get('SELECT * FROM gallery WHERE id = ?', [req.params.id]);
         
         if (!item) return res.status(404).json({ message: 'Gallery item not found' });
 
@@ -270,22 +288,23 @@ app.put('/api/gallery/:id', requireAuth, upload.single('image'), async (req, res
             imageUrl = req.body.imageUrl;
         }
 
-        await run(
-            'UPDATE gallery SET title = $1, image = $2, description = $3, category = $4, display_order = $5, is_published = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7',
+        await db.run(
+            'UPDATE gallery SET title = ?, image = ?, description = ?, category = ?, display_order = ?, is_published = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
             [
                 title !== undefined ? title : item.title, 
                 imageUrl, 
                 description !== undefined ? description : item.description, 
                 category !== undefined ? category : item.category,
                 display_order !== undefined ? display_order : item.display_order,
-                is_published !== undefined ? (is_published ? true : false) : item.is_published,
+                is_published !== undefined ? (is_published ? 1 : 0) : item.is_published,
                 req.params.id
             ]
         );
 
-        const updatedItem = await getOne('SELECT * FROM gallery WHERE id = $1', [req.params.id]);
+        const updatedItem = await db.get('SELECT * FROM gallery WHERE id = ?', [req.params.id]);
         res.json(updatedItem);
     } catch (err) {
+        console.error('Error updating gallery item:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -293,7 +312,8 @@ app.put('/api/gallery/:id', requireAuth, upload.single('image'), async (req, res
 // DELETE GALLERY ITEM (Protected)
 app.delete('/api/gallery/:id', requireAuth, async (req, res) => {
     try {
-        await run('DELETE FROM gallery WHERE id = $1', [req.params.id]);
+        const db = await openDb();
+        await db.run('DELETE FROM gallery WHERE id = ?', [req.params.id]);
         res.json({ message: 'Gallery item deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -305,7 +325,8 @@ app.delete('/api/gallery/:id', requireAuth, async (req, res) => {
 // GET EVENTS (Public)
 app.get('/api/events', async (req, res) => {
     try {
-        const events = await getAll('SELECT * FROM events WHERE is_published = true ORDER BY event_date DESC');
+        const db = await openDb();
+        const events = await db.all('SELECT * FROM events ORDER BY event_date DESC');
         res.json(events);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -327,11 +348,13 @@ app.post('/api/events', requireAuth, upload.single('image'), async (req, res) =>
             return res.status(400).json({ message: 'Title and date are required' });
         }
 
-        const result = await run(
-            'INSERT INTO events (title, event_date, location, capacity, description, image, is_published) VALUES ($1, $2, $3, $4, $5, $6, true) RETURNING *',
+        const db = await openDb();
+        const result = await db.run(
+            'INSERT INTO events (title, event_date, location, capacity, description, image) VALUES (?, ?, ?, ?, ?, ?)',
             [title, event_date, location, capacity, description || '', imageUrl]
         );
-        res.status(201).json(result.rows[0]);
+        const newEvent = await db.get('SELECT * FROM events WHERE id = ?', [result.lastID]);
+        res.status(201).json(newEvent);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -341,7 +364,8 @@ app.post('/api/events', requireAuth, upload.single('image'), async (req, res) =>
 app.put('/api/events/:id', requireAuth, upload.single('image'), async (req, res) => {
     try {
         const { title, event_date, location, capacity, description } = req.body;
-        const event = await getOne('SELECT * FROM events WHERE id = $1', [req.params.id]);
+        const db = await openDb();
+        const event = await db.get('SELECT * FROM events WHERE id = ?', [req.params.id]);
         if (!event) return res.status(404).json({ message: 'Event not found' });
 
         let imageUrl = event.image;
@@ -351,12 +375,12 @@ app.put('/api/events/:id', requireAuth, upload.single('image'), async (req, res)
             imageUrl = req.body.imageUrl;
         }
 
-        await run(
-            'UPDATE events SET title = $1, event_date = $2, location = $3, capacity = $4, description = $5, image = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7',
+        await db.run(
+            'UPDATE events SET title = ?, event_date = ?, location = ?, capacity = ?, description = ?, image = ? WHERE id = ?',
             [title || event.title, event_date || event.event_date, location || event.location, capacity || event.capacity, description || event.description, imageUrl, req.params.id]
         );
 
-        const updatedEvent = await getOne('SELECT * FROM events WHERE id = $1', [req.params.id]);
+        const updatedEvent = await db.get('SELECT * FROM events WHERE id = ?', [req.params.id]);
         res.json(updatedEvent);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -366,7 +390,8 @@ app.put('/api/events/:id', requireAuth, upload.single('image'), async (req, res)
 // DELETE EVENT (Protected)
 app.delete('/api/events/:id', requireAuth, async (req, res) => {
     try {
-        await run('DELETE FROM events WHERE id = $1', [req.params.id]);
+        const db = await openDb();
+        await db.run('DELETE FROM events WHERE id = ?', [req.params.id]);
         res.json({ message: 'Event deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -383,11 +408,13 @@ app.post('/api/contact-messages', async (req, res) => {
             return res.status(400).json({ message: 'Name, email and message are required' });
         }
 
-        const result = await run(
-            'INSERT INTO contact_messages (name, email, phone, subject, message) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        const db = await openDb();
+        const result = await db.run(
+            'INSERT INTO contact_messages (name, email, phone, subject, message) VALUES (?, ?, ?, ?, ?)',
             [name, email, phone || '', subject || '', message]
         );
-        res.status(201).json(result.rows[0]);
+        const newMessage = await db.get('SELECT * FROM contact_messages WHERE id = ?', [result.lastID]);
+        res.status(201).json(newMessage);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -396,7 +423,8 @@ app.post('/api/contact-messages', async (req, res) => {
 // GET CONTACT MESSAGES (Protected)
 app.get('/api/contact-messages', requireAuth, async (req, res) => {
     try {
-        const messages = await getAll('SELECT * FROM contact_messages ORDER BY created_at DESC');
+        const db = await openDb();
+        const messages = await db.all('SELECT * FROM contact_messages ORDER BY created_at DESC');
         res.json(messages);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -406,8 +434,9 @@ app.get('/api/contact-messages', requireAuth, async (req, res) => {
 // MARK MESSAGE AS READ (Protected)
 app.put('/api/contact-messages/:id/read', requireAuth, async (req, res) => {
     try {
-        await run('UPDATE contact_messages SET is_read = true WHERE id = $1', [req.params.id]);
-        const message = await getOne('SELECT * FROM contact_messages WHERE id = $1', [req.params.id]);
+        const db = await openDb();
+        await db.run('UPDATE contact_messages SET is_read = 1 WHERE id = ?', [req.params.id]);
+        const message = await db.get('SELECT * FROM contact_messages WHERE id = ?', [req.params.id]);
         res.json(message);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -417,7 +446,8 @@ app.put('/api/contact-messages/:id/read', requireAuth, async (req, res) => {
 // DELETE CONTACT MESSAGE (Protected)
 app.delete('/api/contact-messages/:id', requireAuth, async (req, res) => {
     try {
-        await run('DELETE FROM contact_messages WHERE id = $1', [req.params.id]);
+        const db = await openDb();
+        await db.run('DELETE FROM contact_messages WHERE id = ?', [req.params.id]);
         res.json({ message: 'Message deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -426,6 +456,5 @@ app.delete('/api/contact-messages/:id', requireAuth, async (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`✓ Server running on http://localhost:${PORT}`);
-    console.log(`✓ Connected to Supabase PostgreSQL`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });

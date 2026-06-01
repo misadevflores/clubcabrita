@@ -9,7 +9,9 @@ const featuredRoutes = ref([
     date: '15 de Mayo, 2026',
     image: '/images/route_snow.png',
     type: 'Alta Montaña',
-    difficulty: 'Extrema'
+    difficulty: 'Extrema',
+    elevation: '5,550 m',
+    duration: '3 días'
   },
   {
     id: 2,
@@ -17,30 +19,43 @@ const featuredRoutes = ref([
     date: '22 de Mayo, 2026',
     image: '/images/route_green.png',
     type: 'Senderismo',
-    difficulty: 'Media'
+    difficulty: 'Media',
+    elevation: '3,800 m',
+    duration: '1 día'
   },
   {
     id: 3,
     title: 'Expedición Huayna Potosí',
     date: '02 de Junio, 2026',
-    image: '/images/gallery_3.png',
+    image: '/images/vertical-img3.jpeg',
     type: 'Alta Montaña',
-    difficulty: 'Alta'
+    difficulty: 'Alta',
+    elevation: '6,088 m',
+    duration: '2 días'
   },
   {
     id: 4,
     title: 'Aventura Andina Norte',
     date: '14 de Junio, 2026',
-    image: '/images/gallery_2.png',
+    image: '/images/vertical-img2.jpeg',
     type: 'Senderismo',
-    difficulty: 'Moderada'
+    difficulty: 'Moderada',
+    elevation: '4,200 m',
+    duration: '1 día'
   }
 ])
 
 const guides = ref([
-  { id: 1, name: 'Mateo Quispe', role: 'Guía de Alta Montaña (UIAGM)', avatar: 'https://i.pravatar.cc/300?u=guides1' },
-  { id: 2, name: 'Valeria López', role: 'Expertise en Ecoturismo', avatar: 'https://i.pravatar.cc/300?u=guides2' },
-  { id: 3, name: 'Diego Arana', role: 'Rescatista y Logística', avatar: 'https://i.pravatar.cc/300?u=guides3' },
+  { id: 1, name: 'Mateo Quispe', role: 'Guía de Alta Montaña (UIAGM)', avatar: 'https://i.pravatar.cc/300?u=guides1', expeditions: 45 },
+  { id: 2, name: 'Valeria López', role: 'Expertise en Ecoturismo', avatar: 'https://i.pravatar.cc/300?u=guides2', expeditions: 38 },
+  { id: 3, name: 'Diego Arana', role: 'Rescatista y Logística', avatar: 'https://i.pravatar.cc/300?u=guides3', expeditions: 52 },
+])
+
+const stats = ref([
+  { number: '500+', label: 'Viajeros Satisfechos', icon: '👥' },
+  { number: '25+', label: 'Rutas Exploradas', icon: '🗺️' },
+  { number: '8,000+', label: 'Metros de Altitud', icon: '⛰️' },
+  { number: '100%', label: 'Seguridad Garantizada', icon: '✓' }
 ])
 
 const marqueeImages = [
@@ -144,14 +159,29 @@ const handleMouseMove = (e: MouseEvent) => {
       </div>
     </section>
 
-    <!-- 2. INFINITE MARQUEE STRIP -->
+    <!-- 2. ESTADÍSTICAS DESTACADAS -->
+    <section class="stats-section">
+      <div class="container">
+        <div class="stats-grid">
+          <div v-for="(stat, index) in stats" :key="index" class="stat-card reveal-trigger">
+            <div class="reveal-item fade-in" :style="{ transitionDelay: `${index * 100}ms` }">
+              <div class="stat-icon">{{ stat.icon }}</div>
+              <div class="stat-number">{{ stat.number }}</div>
+              <div class="stat-label">{{ stat.label }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. INFINITE MARQUEE STRIP -->
     <div class="marquee-strip">
        <div class="marquee-scroll">
          <span v-for="i in 5" :key="i" class="marquee-text">LA NATURALEZA ES EL ÚNICO DESTINO &nbsp;✦&nbsp; </span>
        </div>
     </div>
 
-    <!-- 3. LA FILOSOFÍA (AWWWARDS STYLE) -->
+    <!-- 4. LA FILOSOFÍA (AWWWARDS STYLE) -->
     <section class="section philosophy bg-ultra-light" id="filosofia">
       <div class="container">
          <div class="split-layout">
@@ -186,7 +216,7 @@ const handleMouseMove = (e: MouseEvent) => {
       </div>
     </section>
 
-    <!-- 4. EXPEDICIONES DESTACADAS -->
+    <!-- 5. EXPEDICIONES DESTACADAS -->
     <section class="section featured-routes bg-white relative">
       <div class="container">
         <div class="flex-headline reveal-trigger">
@@ -210,6 +240,16 @@ const handleMouseMove = (e: MouseEvent) => {
               <div class="card-meta mt-6">
                 <span class="card-date">{{ route.date }}</span>
                 <h3 class="card-title">{{ route.title }}</h3>
+                <div class="card-details">
+                  <span class="detail-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    {{ route.elevation }}
+                  </span>
+                  <span class="detail-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    {{ route.duration }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -217,7 +257,7 @@ const handleMouseMove = (e: MouseEvent) => {
       </div>
     </section>
 
-    <!-- 5. NUESTROS GUÍAS (THE TEAM) -->
+    <!-- 6. NUESTROS GUÍAS (THE TEAM) -->
     <section class="section team-section bg-ultra-light">
       <div class="container text-center reveal-trigger">
         <h2 class="section-title reveal-item slide-up-clip text-center">Nuestros Guías</h2>
@@ -230,6 +270,7 @@ const handleMouseMove = (e: MouseEvent) => {
             <div class="reveal-item slide-up-clip" :style="{ transitionDelay: `${index * 200}ms` }">
               <div class="member-avatar">
                 <img :src="guide.avatar" :alt="guide.name" />
+                <div class="expeditions-badge">{{ guide.expeditions }} expediciones</div>
               </div>
               <h3 class="member-name">{{ guide.name }}</h3>
               <p class="member-role">{{ guide.role }}</p>
@@ -239,7 +280,7 @@ const handleMouseMove = (e: MouseEvent) => {
       </div>
     </section>
 
-    <!-- 6. VIDEO / MASSIVE CTA -->
+    <!-- 7. VIDEO / MASSIVE CTA -->
     <section class="section massive-cta" id="video-tour" @mouseenter="isHoveringPlay=true" @mouseleave="isHoveringPlay=false">
       <div class="cta-parallax-bg" :style="{ transform: `translateY(${-scrollY * 0.15 + 200}px)` }"></div>
       <div class="cta-overlay-dark"></div>
@@ -361,7 +402,70 @@ const handleMouseMove = (e: MouseEvent) => {
 .club-est { opacity: 0.7; text-align: right;}
 
 
-/* 2. MARQUEE STRIP */
+/* 2. ESTADÍSTICAS DESTACADAS */
+.stats-section {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #1a4d2e 100%);
+  color: white;
+  padding: 6rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3rem;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  background: rgba(255,255,255,0.1);
+  transform: translateY(-5px);
+  border-color: rgba(255,255,255,0.3);
+}
+
+.stat-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: -1px;
+}
+
+.stat-label {
+  font-size: 1rem;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+/* 3. INFINITE MARQUEE STRIP -->
 .marquee-strip {
   background: var(--color-primary); color: white; padding: 1.5rem 0; overflow: hidden; display: flex; align-items: center;
 }
@@ -430,6 +534,27 @@ const handleMouseMove = (e: MouseEvent) => {
 .card-title { font-size: 2rem; font-weight: 700; color: var(--color-text-dark); transition: color 0.3s; }
 .premium-card:hover .card-title { color: var(--color-accent); }
 
+.card-details {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.detail-item svg {
+  color: var(--color-accent);
+}
+
 
 /* 5. TEAM / GUIDES */
 .team-section .section-desc { font-size: 1.2rem; color: var(--color-text-muted); line-height: 1.6;}
@@ -437,6 +562,26 @@ const handleMouseMove = (e: MouseEvent) => {
 .member-avatar { width: 100%; aspect-ratio: 1/1; border-radius: 50%; overflow: hidden; margin-bottom: 2rem; position: relative; }
 .member-avatar img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%); transition: all 0.5s ease;}
 .team-member:hover .member-avatar img { filter: grayscale(0%); transform: scale(1.05); }
+
+.expeditions-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.team-member:hover .expeditions-badge {
+  opacity: 1;
+}
+
 .member-name { font-size: 1.8rem; font-weight: 800; color: var(--color-primary); }
 .member-role { font-size: 1.1rem; color: var(--color-text-muted); margin-top: 0.5rem; }
 
@@ -508,6 +653,7 @@ const handleMouseMove = (e: MouseEvent) => {
   .split-layout { grid-template-columns: 1fr; gap: 4rem; }
   .huge-title { br { display: none; } }
   .magnetic-btn { width: 120px; height: 120px; margin-top: 2rem !important; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 2rem; }
 }
 @media (max-width: 768px) {
   .hero-actions .flex-gap { flex-direction: column; align-items: flex-start; }
@@ -519,5 +665,9 @@ const handleMouseMove = (e: MouseEvent) => {
   .feat-row { flex-direction: column; gap: 1rem; }
   .custom-cursor { display: none !important; } /* No custom cursor on mobile */
   .premium-card, .massive-cta { cursor: auto; }
+  .stats-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+  .stat-card { padding: 1.5rem; }
+  .stat-number { font-size: 2rem; }
+  .card-details { flex-direction: column; gap: 1rem; }
 }
 </style>

@@ -1,53 +1,111 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 
-const galleryImages = ref([
-  {
-    id: 1,
-    image: '/images/vertical-img1.jpeg',
-    title: '¡Logramos el pico!',
-    location: 'Pico Cabritas',
-    spanClass: 'col-span-2 row-span-2' // large square
-  },
-  {
-    id: 2,
-    image: '/images/cafetal-img1.jpeg',
-    title: 'Visita al Cafetal',
-    location: 'El Cafetal',
-    spanClass: 'col-span-2 row-span-1' // wide horizontal
-  },
-  {
-    id: 3,
-    image: '/images/vertical-img3.jpeg',
-    title: 'Atardeceres Andinos',
-    location: 'Majestuosa Montaña',
-    spanClass: 'col-span-1 row-span-2' // tall vertical
-  },
-  {
-    id: 4,
-    image: '/images/vertical-img2.jpeg',
-    title: 'Atardeceres Andinos',
-    location: 'Majestuosa Montaña',
-    spanClass: 'col-span-1 row-span-1' // standard square
-  },
-  {
-    id: 5,
-    image: '/images/vertical-img4.jpeg',
-    title: 'Montañas del valle',
-    location: 'Codo de los Andes',
-    spanClass: 'col-span-1 row-span-1' // standard square
-  },
-  {
-    id: 6,
-    image: '/images/vertical-img5.jpeg',
-    title: 'Alta Montaña',
-    location: 'Codo de los Andes',
-    spanClass: 'col-span-2 row-span-2' // large square
-  }
-])
+interface GalleryItem {
+  id: number
+  image: string
+  title: string
+  description?: string
+  category?: string
+  display_order?: number
+}
+
+const galleryImages = ref<GalleryItem[]>([])
+const loading = ref(true)
+const error = ref('')
 
 const activeIndex = ref<number | null>(null)
 const isLightboxOpen = ref(false)
+
+// Calcular spanClass basado en display_order
+const getSpanClass = (index: number): string => {
+  const spanClasses = [
+    'col-span-2 row-span-2', // 0
+    'col-span-2 row-span-1', // 1
+    'col-span-1 row-span-2', // 2
+    'col-span-1 row-span-1', // 3
+    'col-span-1 row-span-1', // 4
+    'col-span-2 row-span-2'  // 5
+  ]
+  return spanClasses[index % spanClasses.length]
+}
+
+// Cargar galería desde la BD
+const fetchGallery = async () => {
+  try {
+    loading.value = true
+    const response = await fetch('/api/gallery')
+    if (!response.ok) throw new Error('Error al cargar galería')
+    const data = await response.json()
+    
+    // Ordenar por display_order
+    galleryImages.value = data.sort((a: GalleryItem, b: GalleryItem) => 
+      (a.display_order || 0) - (b.display_order || 0)
+    )
+    error.value = ''
+  } catch (err) {
+    console.error('Error:', err)
+    error.value = 'No se pudo cargar la galería'
+    // Cargar datos por defecto si hay error
+    loadDefaultGallery()
+  } finally {
+    loading.value = false
+  }
+}
+
+// Datos por defecto si no hay en BD
+const loadDefaultGallery = () => {
+  galleryImages.value = [
+    {
+      id: 1,
+      image: '/images/vertical-img1.jpeg',
+      title: '¡Logramos el pico!',
+      description: 'Un momento épico en la cumbre',
+      category: 'Montaña',
+      display_order: 0
+    },
+    {
+      id: 2,
+      image: '/images/cafetal-img1.jpeg',
+      title: 'Visita al Cafetal',
+      description: 'Explorando las plantaciones locales',
+      category: 'Naturaleza',
+      display_order: 1
+    },
+    {
+      id: 3,
+      image: '/images/vertical-img3.jpeg',
+      title: 'Atardeceres Andinos',
+      description: 'Puesta de sol majestuosa',
+      category: 'Paisaje',
+      display_order: 2
+    },
+    {
+      id: 4,
+      image: '/images/vertical-img2.jpeg',
+      title: 'Atardeceres Andinos',
+      description: 'Colores del atardecer',
+      category: 'Paisaje',
+      display_order: 3
+    },
+    {
+      id: 5,
+      image: '/images/vertical-img4.jpeg',
+      title: 'Montañas del valle',
+      description: 'Vista del valle',
+      category: 'Montaña',
+      display_order: 4
+    },
+    {
+      id: 6,
+      image: '/images/vertical-img5.jpeg',
+      title: 'Alta Montaña',
+      description: 'Cumbre nevada',
+      category: 'Montaña',
+      display_order: 5
+    }
+  ]
+}
 
 const openLightbox = (index: number) => {
   activeIndex.value = index
@@ -80,7 +138,11 @@ const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'ArrowLeft') prevImage()
 }
 
-onMounted(() => window.addEventListener('keydown', handleKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+  fetchGallery()
+})
+
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 </script>
 
@@ -97,22 +159,34 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
       </div>
     </header>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="container text-center py-12">
+      <div class="spinner"></div>
+      <p class="text-muted mt-4">Cargando galería...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="container text-center py-12">
+      <p class="text-error">{{ error }}</p>
+    </div>
+
     <!-- Masonry-like CSS Grid -->
-    <div class="container">
+    <div v-else class="container">
       <div class="bento-grid fade-in-up delay-2">
         <div 
           v-for="(item, index) in galleryImages" 
           :key="item.id" 
           class="grid-item group"
-          :class="item.spanClass"
+          :class="getSpanClass(index)"
           @click="openLightbox(index)"
         >
           <img :src="item.image" :alt="item.title" class="gallery-image" loading="lazy" />
           
           <div class="image-overlay">
             <div class="overlay-text">
-              <span class="location">{{ item.location }}</span>
+              <span v-if="item.category" class="location">{{ item.category }}</span>
               <h3 class="title">{{ item.title }}</h3>
+              <p v-if="item.description" class="description">{{ item.description }}</p>
             </div>
             
             <div class="view-icon">
@@ -149,7 +223,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
         
         <div class="lightbox-info">
           <h2>{{ galleryImages[activeIndex]?.title }}</h2>
-          <p><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline; margin-right:4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> {{ galleryImages[activeIndex]?.location }}</p>
+          <p v-if="galleryImages[activeIndex]?.category">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline; margin-right:4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> 
+            {{ galleryImages[activeIndex]?.category }}
+          </p>
+          <p v-if="galleryImages[activeIndex]?.description" class="description-text">
+            {{ galleryImages[activeIndex]?.description }}
+          </p>
         </div>
       </div>
       
@@ -164,6 +244,30 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 <style scoped>
 .pb-12 {
   padding-bottom: 8rem;
+}
+
+/* Loading Spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(40, 167, 69, 0.2);
+  border-top-color: #28a745;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-error {
+  color: #dc3545;
+  font-size: 1.1rem;
 }
 
 /* Header */
@@ -277,6 +381,14 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
   font-size: 1.8rem;
   font-weight: 600;
   line-height: 1.2;
+  margin: 0;
+}
+
+.description {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  line-height: 1.4;
 }
 
 .view-icon {
@@ -337,7 +449,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 .cinematic-lightbox {
   position: fixed;
   inset: 0;
-  background-color: rgba(6, 15, 10, 0.98); /* Deep dark green tint */
+  background-color: rgba(6, 15, 10, 0.98);
   backdrop-filter: blur(15px);
   z-index: 9999;
   display: flex;
@@ -455,6 +567,15 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
   font-size: 1rem;
   letter-spacing: 2px;
   text-transform: uppercase;
+  margin: 0.5rem 0;
+}
+
+.description-text {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 1rem !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  margin-top: 1rem !important;
 }
 
 .fade-enter-active,
