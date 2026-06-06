@@ -2,672 +2,1267 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
-const featuredRoutes = ref([
-  {
-    id: 1,
-    title: 'Cumbre Nevado Condoriri',
-    date: '15 de Mayo, 2026',
-    image: '/images/route_snow.png',
-    type: 'Alta Montaña',
-    difficulty: 'Extrema',
-    elevation: '5,550 m',
-    duration: '3 días'
-  },
-  {
-    id: 2,
-    title: 'Trekking Valle de las Ánimas',
-    date: '22 de Mayo, 2026',
-    image: '/images/route_green.png',
-    type: 'Senderismo',
-    difficulty: 'Media',
-    elevation: '3,800 m',
-    duration: '1 día'
-  },
-  {
-    id: 3,
-    title: 'Expedición Huayna Potosí',
-    date: '02 de Junio, 2026',
-    image: '/images/vertical-img3.jpeg',
-    type: 'Alta Montaña',
-    difficulty: 'Alta',
-    elevation: '6,088 m',
-    duration: '2 días'
-  },
-  {
-    id: 4,
-    title: 'Aventura Andina Norte',
-    date: '14 de Junio, 2026',
-    image: '/images/vertical-img2.jpeg',
-    type: 'Senderismo',
-    difficulty: 'Moderada',
-    elevation: '4,200 m',
-    duration: '1 día'
-  }
-])
-
-const guides = ref([
-  { id: 1, name: 'Mateo Quispe', role: 'Guía de Alta Montaña (UIAGM)', avatar: 'https://i.pravatar.cc/300?u=guides1', expeditions: 45 },
-  { id: 2, name: 'Valeria López', role: 'Expertise en Ecoturismo', avatar: 'https://i.pravatar.cc/300?u=guides2', expeditions: 38 },
-  { id: 3, name: 'Diego Arana', role: 'Rescatista y Logística', avatar: 'https://i.pravatar.cc/300?u=guides3', expeditions: 52 },
-])
-
-const stats = ref([
-  { number: '500+', label: 'Viajeros Satisfechos', icon: '👥' },
-  { number: '25+', label: 'Rutas Exploradas', icon: '🗺️' },
-  { number: '8,000+', label: 'Metros de Altitud', icon: '⛰️' },
-  { number: '100%', label: 'Seguridad Garantizada', icon: '✓' }
-])
-
-const marqueeImages = [
-  '/images/gallery_1.png', '/images/gallery_2.png', '/images/gallery_3.png',
-  '/images/route_snow.png', '/images/route_green.png', '/images/hero_bg.png'
-]
-
-const observer = ref<IntersectionObserver | null>(null)
 const scrollY = ref(0)
-const mousePos = ref({ x: 0, y: 0 })
-const isHoveringPlay = ref(false)
+const heroVisible = ref(false)
+
+const handleScroll = () => { scrollY.value = window.scrollY }
+
+// Intersection observer for reveal animations
+let observer: IntersectionObserver
 
 onMounted(() => {
-  // Intersection Observer for the Advanced Reveal Animations
-  observer.value = new IntersectionObserver((entries) => {
+  heroVisible.value = true
+  window.addEventListener('scroll', handleScroll, { passive: true })
+
+  observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        entry.target.classList.add('is-revealed')
+        entry.target.classList.add('revealed')
+        observer.unobserve(entry.target)
       }
     })
-  }, { threshold: 0.15, rootMargin: '0px 0px -100px 0px' })
+  }, { threshold: 0.12 })
 
-  document.querySelectorAll('.reveal-trigger').forEach((el) => {
-    observer.value?.observe(el)
-  })
-
-  window.addEventListener('scroll', handleScroll)
-  window.addEventListener('mousemove', handleMouseMove)
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
 })
 
 onUnmounted(() => {
-  if (observer.value) observer.value.disconnect()
   window.removeEventListener('scroll', handleScroll)
-  window.removeEventListener('mousemove', handleMouseMove)
+  observer?.disconnect()
 })
 
-const handleScroll = () => { scrollY.value = window.scrollY }
-const handleMouseMove = (e: MouseEvent) => {
-  mousePos.value = { x: e.clientX, y: e.clientY }
-}
+const stats = [
+  { number: '500+', label: 'Viajeros', icon: '👥' },
+  { number: '25+',  label: 'Rutas',    icon: '🗺️' },
+  { number: '6,088m', label: 'Cumbre más alta', icon: '⛰️' },
+  { number: '100%', label: 'Seguridad', icon: '🛡️' },
+]
+
+const features = [
+  {
+    num: '01',
+    title: 'Conexión Auténtica',
+    text: 'Lejos del turismo masivo. Forjamos vínculos reales con la naturaleza y las comunidades en cada paso y cumbre.',
+    icon: '🌿'
+  },
+  {
+    num: '02',
+    title: 'Guías UIAGM',
+    text: 'Desafiamos las alturas más imponentes de los Andes bolivianos siempre respaldados por guías certificados internacionalmente.',
+    icon: '🧗'
+  },
+  {
+    num: '03',
+    title: 'Turismo Circular',
+    text: 'Integramos y favorecemos el crecimiento económico de las familias que custodian las faldas de nuestras montañas.',
+    icon: '♻️'
+  },
+]
+
+const routes = [
+  {
+    id: 1,
+    title: 'Nevado Condoriri',
+    subtitle: 'Cordillera Real',
+    date: '15 May 2026',
+    image: '/images/route_snow.png',
+    type: 'Alta Montaña',
+    difficulty: 'Difícil',
+    elevation: '5,550 m',
+    duration: '3 días',
+    color: '#0f3460'
+  },
+  {
+    id: 2,
+    title: 'Valle de las Ánimas',
+    subtitle: 'La Paz',
+    date: '22 May 2026',
+    image: '/images/route_green.png',
+    type: 'Senderismo',
+    difficulty: 'Moderado',
+    elevation: '3,800 m',
+    duration: '1 día',
+    color: '#123524'
+  },
+  {
+    id: 3,
+    title: 'Huayna Potosí',
+    subtitle: 'Cordillera Real',
+    date: '02 Jun 2026',
+    image: '/images/vertical-img3.jpeg',
+    type: 'Alta Montaña',
+    difficulty: 'Difícil',
+    elevation: '6,088 m',
+    duration: '2 días',
+    color: '#1a3a2a'
+  },
+]
+
+const gallery = [
+  { id: 1, src: '/images/vertical-img1.jpeg', label: 'Cumbre' },
+  { id: 2, src: '/images/cafetal-img1.jpeg',  label: 'Cafetal' },
+  { id: 3, src: '/images/vertical-img4.jpeg', label: 'Valle' },
+  { id: 4, src: '/images/vertical-img5.jpeg', label: 'Nevada' },
+]
+
+const ctaPhotos = [
+  '/images/vertical-img1.jpeg',
+  '/images/vertical-img2.jpeg',
+  '/images/vertical-img3.jpeg',
+  '/images/vertical-img4.jpeg',
+  '/images/vertical-img5.jpeg',
+]
 </script>
 
 <template>
-  <div class="home-view">
-    
-    <!-- Custom interactive cursor for video hover -->
-    <div v-show="isHoveringPlay" class="custom-cursor" :style="{ left: mousePos.x + 'px', top: mousePos.y + 'px' }">
-      PLAY
-    </div>
+  <div class="home">
 
-    <!-- 1. CINEMATIC HERO -->
+    <!-- ══════════════════════════════════════════
+         HERO
+    ══════════════════════════════════════════ -->
     <section class="hero">
-      <div class="hero-bg" :style="{ transform: `translateY(${scrollY * 0.4}px) scale(${1 + scrollY * 0.0005})` }"></div>
-      <div class="hero-overlay"></div>
-      
-      <!-- Granular compass/topo lines overlay -->
-      <div class="topo-pattern"></div>
+      <div
+        class="hero__bg"
+        :style="{ transform: `translateY(${scrollY * 0.35}px)` }"
+      ></div>
+      <div class="hero__gradient"></div>
 
-      <div class="container hero-content">
-        <div class="reveal-trigger">
-           <span class="hero-badge reveal-item slide-up-clip">ECOTURISMO DE AUTOR</span>
-        </div>
-        
-        <div class="reveal-trigger">
-          <h1 class="hero-title">
-            <span class="reveal-item slide-up-clip line-1">No somos</span>
-            <span class="reveal-item slide-up-clip line-2 text-accent">agencia.</span><br/>
-            <span class="reveal-item slide-up-clip line-3">Somos viajeros.</span>
-          </h1>
-        </div>
+      <div class="hero__content container" :class="{ 'hero__content--visible': heroVisible }">
+        <span class="hero__tag">Ecoturismo · Bolivia</span>
 
-        <div class="reveal-trigger">
-          <p class="hero-desc reveal-item fade-in delay-800">
-            Descubre las montañas ocultas de Bolivia, rutas exclusivas sin masificación y crónicas de expediciones creadas por y para exploradores reales.
-          </p>
-        </div>
-        
-        <div class="reveal-trigger hero-actions">
-          <div class="reveal-item fade-in delay-1000 flex-gap">
-            <RouterLink to="/rutas" class="btn-premium">Descubrir Aventuras</RouterLink>
-            <a href="#video-tour" class="play-btn-circle" @mouseenter="isHoveringPlay=true" @mouseleave="isHoveringPlay=false">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            </a>
-            <span class="play-label">Ver El Documental</span>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Bottom Social / Scroll Anchor -->
-      <div class="hero-bottom reveal-trigger">
-        <div class="reveal-item fade-in delay-1200 bottom-flex container">
-          <div class="social-links-minimal">
-            <a href="https://instagram.com/club.cabritas" target="_blank">IG</a>
-            <a href="https://tiktok.com/@club.cabritas" target="_blank">TK</a>
-          </div>
-          <div class="scroll-mouse">
-             <div class="wheel"></div>
-          </div>
-          <div class="club-est">EST. <br> 2023</div>
-        </div>
-      </div>
-    </section>
+        <h1 class="hero__title">
+          No somos<br/>
+          <em>agencia.</em><br/>
+          Somos viajeros.
+        </h1>
 
-    <!-- 2. ESTADÍSTICAS DESTACADAS -->
-    <section class="stats-section">
-      <div class="container">
-        <div class="stats-grid">
-          <div v-for="(stat, index) in stats" :key="index" class="stat-card reveal-trigger">
-            <div class="reveal-item fade-in" :style="{ transitionDelay: `${index * 100}ms` }">
-              <div class="stat-icon">{{ stat.icon }}</div>
-              <div class="stat-number">{{ stat.number }}</div>
-              <div class="stat-label">{{ stat.label }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3. INFINITE MARQUEE STRIP -->
-    <div class="marquee-strip">
-       <div class="marquee-scroll">
-         <span v-for="i in 5" :key="i" class="marquee-text">LA NATURALEZA ES EL ÚNICO DESTINO &nbsp;✦&nbsp; </span>
-       </div>
-    </div>
-
-    <!-- 4. LA FILOSOFÍA (AWWWARDS STYLE) -->
-    <section class="section philosophy bg-ultra-light" id="filosofia">
-      <div class="container">
-         <div class="split-layout">
-           <div class="split-left reveal-trigger">
-             <h2 class="huge-title reveal-item slide-up-clip">El camino<br>del viajero.</h2>
-             <RouterLink to="/galeria" class="magnetic-btn reveal-item fade-in delay-400 mt-12">Ver Galería</RouterLink>
-           </div>
-           <div class="split-right">
-             <div class="feat-row reveal-trigger">
-               <div class="reveal-item slide-up-clip">
-                 <span class="feat-num">01</span>
-                 <h3 class="feat-title">Conexión Auténtica</h3>
-                 <p class="feat-text">Lejos del turismo tradicional. Forjamos vínculos reales con la naturaleza, con las comunidades y entre nosotros mismos, en cada paso y cada cumbre.</p>
-               </div>
-             </div>
-             <div class="feat-row reveal-trigger">
-               <div class="reveal-item slide-up-clip">
-                 <span class="feat-num">02</span>
-                 <h3 class="feat-title">Seguridad (UIAGM)</h3>
-                 <p class="feat-text">Desafiamos las alturas más imponentes de la Cordillera de los Andes boliviana siempre respaldados por guías profesionales de talla internacional.</p>
-               </div>
-             </div>
-             <div class="feat-row reveal-trigger">
-               <div class="reveal-item slide-up-clip">
-                 <span class="feat-num">03</span>
-                 <h3 class="feat-title">Turismo Circular</h3>
-                 <p class="feat-text">Nuestra huella debe ser positiva. Integramos y favorecemos el crecimiento económico de las familias que custodian las faldas de nuestras montañas.</p>
-               </div>
-             </div>
-           </div>
-         </div>
-      </div>
-    </section>
-
-    <!-- 5. EXPEDICIONES DESTACADAS -->
-    <section class="section featured-routes bg-white relative">
-      <div class="container">
-        <div class="flex-headline reveal-trigger">
-          <h2 class="section-title reveal-item slide-up-clip">Aventuras al<br/>Cambio</h2>
-          <div class="reveal-item fade-in delay-200">
-            <RouterLink to="/rutas" class="circle-link-btn">Explorar<br/>Todo ➔</RouterLink>
-          </div>
-        </div>
-
-        <div class="premium-grid mt-16">
-          <div v-for="(route, index) in featuredRoutes" :key="route.id" class="premium-card reveal-trigger" @mouseenter="isHoveringPlay=true" @mouseleave="isHoveringPlay=false">
-            <div class="reveal-item fade-in" :style="{ transitionDelay: `${index * 150}ms` }">
-              <div class="img-zoom-wrapper">
-                <img :src="route.image" :alt="route.title" class="img-zoom" loading="lazy" />
-                <div class="card-overlay"></div>
-                <div class="card-badges">
-                  <span class="pill-primary">{{ route.type }}</span>
-                  <span class="pill-outline">{{ route.difficulty }}</span>
-                </div>
-              </div>
-              <div class="card-meta mt-6">
-                <span class="card-date">{{ route.date }}</span>
-                <h3 class="card-title">{{ route.title }}</h3>
-                <div class="card-details">
-                  <span class="detail-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    {{ route.elevation }}
-                  </span>
-                  <span class="detail-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    {{ route.duration }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 6. NUESTROS GUÍAS (THE TEAM) -->
-    <section class="section team-section bg-ultra-light">
-      <div class="container text-center reveal-trigger">
-        <h2 class="section-title reveal-item slide-up-clip text-center">Nuestros Guías</h2>
-        <p class="section-desc reveal-item fade-in delay-200 mx-auto mt-6" style="max-width: 600px;">
-          Tu seguridad y aprendizaje dependen de quienes te acompañan. Conoce al equipo de expertos que te llevará hasta la cima.
+        <p class="hero__desc">
+          Expediciones auténticas por las cumbres y valles más salvajes de Bolivia.
+          Sin masificación. Solo naturaleza, comunidad y adrenalina.
         </p>
 
-        <div class="team-grid mt-16">
-          <div v-for="(guide, index) in guides" :key="guide.id" class="team-member reveal-trigger">
-            <div class="reveal-item slide-up-clip" :style="{ transitionDelay: `${index * 200}ms` }">
-              <div class="member-avatar">
-                <img :src="guide.avatar" :alt="guide.name" />
-                <div class="expeditions-badge">{{ guide.expeditions }} expediciones</div>
-              </div>
-              <h3 class="member-name">{{ guide.name }}</h3>
-              <p class="member-role">{{ guide.role }}</p>
-            </div>
+        <div class="hero__cta">
+          <RouterLink to="/rutas" class="btn-hero-primary">
+            Ver expediciones
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </RouterLink>
+          <RouterLink to="/galeria" class="btn-hero-ghost">Galería</RouterLink>
+        </div>
+
+        <!-- scroll hint -->
+        <div class="hero__scroll">
+          <div class="hero__scroll-line"></div>
+          <span>scroll</span>
+        </div>
+      </div>
+
+      <!-- floating badge -->
+      <div class="hero__badge">
+        <span class="hero__badge-num">EST.</span>
+        <span class="hero__badge-year">2023</span>
+      </div>
+
+      <!-- social strip -->
+      <div class="hero__social">
+        <a href="https://instagram.com/club.cabritas" target="_blank" rel="noopener">IG</a>
+        <div class="hero__social-line"></div>
+        <a href="https://tiktok.com/@club.cabritas" target="_blank" rel="noopener">TK</a>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         MARQUEE
+    ══════════════════════════════════════════ -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        <span v-for="i in 8" :key="i" class="marquee__item">
+          Ecoturismo&nbsp;·&nbsp;Bolivia&nbsp;·&nbsp;Aventura&nbsp;·&nbsp;Naturaleza&nbsp;&nbsp;
+        </span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         STATS
+    ══════════════════════════════════════════ -->
+    <section class="stats">
+      <div class="container">
+        <div class="stats__grid">
+          <div
+            v-for="(s, i) in stats"
+            :key="i"
+            class="stats__item reveal"
+            :style="{ transitionDelay: `${i * 80}ms` }"
+          >
+            <span class="stats__icon">{{ s.icon }}</span>
+            <strong class="stats__num">{{ s.number }}</strong>
+            <span class="stats__label">{{ s.label }}</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 7. VIDEO / MASSIVE CTA -->
-    <section class="section massive-cta" id="video-tour" @mouseenter="isHoveringPlay=true" @mouseleave="isHoveringPlay=false">
-      <div class="cta-parallax-bg" :style="{ transform: `translateY(${-scrollY * 0.15 + 200}px)` }"></div>
-      <div class="cta-overlay-dark"></div>
-      
-      <div class="container cta-flex reveal-trigger">
-        <div class="cta-text reveal-item slide-up-clip">
-          <h2 class="massive-title">No hay Wi-Fi en la montaña,<br>pero encontrarás <span class="text-accent">una mejor conexión.</span></h2>
-          <form class="email-capture mt-12" @submit.prevent>
-            <input type="email" placeholder="Tu correo electrónico para unirte" required />
-            <button type="submit" class="submit-arrow">→</button>
-          </form>
-          <p class="mt-4 text-sm text-gray font-mono uppercase tracking-widest">Recibe alertas de próximas salidas</p>
+    <!-- ══════════════════════════════════════════
+         FILOSOFÍA — "El camino del viajero"
+    ══════════════════════════════════════════ -->
+    <section class="philosophy">
+      <div class="container">
+        <div class="philosophy__layout">
+
+          <!-- left sticky column -->
+          <div class="philosophy__left reveal">
+            <span class="section-tag">Nuestra filosofía</span>
+            <h2 class="philosophy__title">El camino<br/>del viajero.</h2>
+            <p class="philosophy__sub">
+              Club Cabritas nació de la pasión, no del negocio.
+              Cada expedición es una historia nueva.
+            </p>
+            <RouterLink to="/galeria" class="btn-circle">
+              Ver<br/>galería
+            </RouterLink>
+          </div>
+
+          <!-- right features -->
+          <div class="philosophy__right">
+            <div
+              v-for="(f, i) in features"
+              :key="i"
+              class="feat reveal"
+              :style="{ transitionDelay: `${i * 120}ms` }"
+            >
+              <div class="feat__header">
+                <span class="feat__icon">{{ f.icon }}</span>
+                <span class="feat__num">{{ f.num }}</span>
+              </div>
+              <h3 class="feat__title">{{ f.title }}</h3>
+              <p class="feat__text">{{ f.text }}</p>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
+
+    <!-- ══════════════════════════════════════════
+         RUTAS DESTACADAS
+    ══════════════════════════════════════════ -->
+    <section class="routes-section">
+      <div class="container">
+        <div class="section-header reveal">
+          <div>
+            <span class="section-tag">Próximas salidas</span>
+            <h2 class="section-title">Expediciones<br/>destacadas</h2>
+          </div>
+          <RouterLink to="/rutas" class="btn-link">
+            Ver todas
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </RouterLink>
+        </div>
+
+        <div class="routes-grid">
+          <article
+            v-for="(r, i) in routes"
+            :key="r.id"
+            class="route-card reveal"
+            :style="{ transitionDelay: `${i * 100}ms` }"
+          >
+            <div class="route-card__img-wrap">
+              <img :src="r.image" :alt="r.title" loading="lazy" />
+              <div class="route-card__overlay" :style="{ background: `linear-gradient(to top, ${r.color}ee 0%, transparent 55%)` }"></div>
+              <span class="route-card__type">{{ r.type }}</span>
+            </div>
+            <div class="route-card__body">
+              <div class="route-card__meta">
+                <span class="route-card__date">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  {{ r.date }}
+                </span>
+                <span class="route-card__diff" :class="`diff--${r.difficulty.toLowerCase()}`">{{ r.difficulty }}</span>
+              </div>
+              <h3 class="route-card__title">{{ r.title }}</h3>
+              <p class="route-card__sub">{{ r.subtitle }}</p>
+              <div class="route-card__details">
+                <span>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {{ r.elevation }}
+                </span>
+                <span>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  {{ r.duration }}
+                </span>
+              </div>
+              <RouterLink to="/rutas" class="route-card__cta">Reservar cupo</RouterLink>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         GALERÍA PREVIEW (bento)
+    ══════════════════════════════════════════ -->
+    <section class="gallery-preview">
+      <div class="container">
+        <div class="section-header reveal">
+          <div>
+            <span class="section-tag">Nuestras memorias</span>
+            <h2 class="section-title">En cada<br/>cumbre.</h2>
+          </div>
+          <RouterLink to="/galeria" class="btn-link">
+            Ver galería completa
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </RouterLink>
+        </div>
+
+        <div class="bento reveal">
+          <RouterLink
+            v-for="(img, i) in gallery"
+            :key="img.id"
+            to="/galeria"
+            class="bento__item"
+            :class="`bento__item--${i}`"
+          >
+            <img :src="img.src" :alt="img.label" loading="lazy" />
+            <span class="bento__label">{{ img.label }}</span>
+          </RouterLink>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         CTA FINAL
+    ══════════════════════════════════════════ -->
+    <section class="cta-section">
+
+      <!-- Collage de fotos verticales -->
+      <div class="cta-collage" aria-hidden="true">
+        <div
+          v-for="(img, i) in ctaPhotos"
+          :key="i"
+          class="cta-collage__strip"
+          :style="{
+            backgroundImage: `url(${img})`,
+            transform: `translateY(${scrollY * (i % 2 === 0 ? -0.07 : 0.05)}px)`
+          }"
+        ></div>
+      </div>
+
+      <!-- Overlay degradado de izquierda a derecha -->
+      <div class="cta-section__overlay"></div>
+
+      <!-- Contenido -->
+      <div class="container cta-section__inner reveal">
+
+        <!-- Izquierda: texto -->
+        <div class="cta-section__left">
+          <span class="cta-section__tag-pill">Únete a la comunidad</span>
+          <h2 class="cta-section__title">
+            No hay Wi‑Fi<br/>
+            en la montaña,<br/>
+            pero encontrarás<br/>
+            <em>una mejor<br/>conexión.</em>
+          </h2>
+          <div class="cta-section__stats">
+            <div class="cta-stat">
+              <strong>500+</strong>
+              <span>viajeros activos</span>
+            </div>
+            <div class="cta-stat-divider"></div>
+            <div class="cta-stat">
+              <strong>25+</strong>
+              <span>expediciones al año</span>
+            </div>
+            <div class="cta-stat-divider"></div>
+            <div class="cta-stat">
+              <strong>100%</strong>
+              <span>aventura real</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Derecha: card acción -->
+        <div class="cta-section__right">
+          <div class="cta-card">
+            <div class="cta-card__icon">⛰️</div>
+            <h3 class="cta-card__title">¿Listo para la aventura?</h3>
+            <p class="cta-card__desc">
+              Escríbenos directamente por WhatsApp. Te contamos fechas, cupos disponibles y todo lo que necesitas saber antes de tu primera expedición.
+            </p>
+
+            <!-- Botón WhatsApp -->
+            <a
+              href="https://wa.me/59170000000?text=Hola%20Club%20Cabritas%2C%20me%20interesa%20unirme%20a%20una%20expedici%C3%B3n%20%F0%9F%8F%94%EF%B8%8F"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="cta-card__whatsapp"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              Escribir por WhatsApp
+            </a>
+
+            <p class="cta-card__hint">Respuesta rápida · Sin compromiso</p>
+
+            <div class="cta-card__social">
+              <span>Síguenos:</span>
+              <a href="https://instagram.com/club.cabritas" target="_blank" rel="noopener" class="cta-card__social-link">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                Instagram
+              </a>
+              <a href="https://tiktok.com/@club.cabritas" target="_blank" rel="noopener" class="cta-card__social-link">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.52V6.74a4.85 4.85 0 01-1.02-.05z"/></svg>
+                TikTok
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </div>
 </template>
 
 <style scoped>
-/* GENERAL VARIABLES & RESETS */
-.bg-ultra-light { background-color: #fcfdfc; }
-.bg-white { background-color: #ffffff; }
-.text-accent { color: var(--color-accent); }
-.text-gray { color: #a1a1aa; }
+/* ─────────────────────────────────────────
+   BASE
+───────────────────────────────────────── */
+.home {
+  overflow-x: hidden;
+}
 
-/* CUSTOM CURSOR */
-.custom-cursor {
-  position: fixed;
-  width: 100px;
-  height: 100px;
-  background: var(--color-accent);
-  color: white;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* section tag pill */
+.section-tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  background: rgba(249, 115, 22, 0.1);
+  padding: 0.35rem 0.9rem;
+  border-radius: 100px;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: clamp(2.2rem, 4.5vw, 3.5rem);
   font-weight: 800;
-  letter-spacing: 2px;
-  font-size: 0.9rem;
-  transform: translate(-50%, -50%) scale(0);
-  animation: popIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  mix-blend-mode: hard-light;
-}
-@keyframes popIn {
-  to { transform: translate(-50%, -50%) scale(1); }
+  line-height: 1.1;
+  color: var(--color-primary);
+  letter-spacing: -1px;
 }
 
-/* 1. CINEMATIC HERO */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 3rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  font-size: 0.95rem; 
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-accent);
+  padding-bottom: 2px;
+  transition: gap 0.3s;
+  white-space: nowrap;
+}
+.btn-link:hover { gap: 0.7rem; color: var(--color-accent); }
+
+/* ─────────────────────────────────────────
+   REVEAL ANIMATIONS
+───────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─────────────────────────────────────────
+   HERO
+───────────────────────────────────────── */
 .hero {
   position: relative;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  color: white;
+  align-items: center;
   overflow: hidden;
-  padding-top: 80px; /* Offset the fixed nav */
+  color: white;
   margin-top: -80px;
-}
-.hero-bg {
-  position: absolute; inset: -10%; width: 120%; height: 120%;
-  background-image: url('/images/hero_bg.png');
-  background-size: cover; background-position: center; z-index: 0;
-  will-change: transform;
-}
-.hero-overlay {
-  position: absolute; inset: 0; background: linear-gradient(to right, rgba(6, 17, 10, 0.9) 0%, rgba(6, 17, 10, 0.4) 100%); z-index: 1;
-}
-.topo-pattern {
-  position: absolute; inset: 0; opacity: 0.05; z-index: 2;
-  background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 32px 32px;
+  padding-top: 80px;
 }
 
-.hero-content {
-  position: relative; z-index: 10; max-width: 1200px; width: 100%;
-}
-
-.hero-badge {
-  display: inline-block; font-size: 0.85rem; font-weight: 800; letter-spacing: 4px; border: 1px solid rgba(255,255,255,0.3); padding: 0.5rem 1.5rem; border-radius: 100px; margin-bottom: 2rem; backdrop-filter: blur(10px);
-}
-
-.hero-title {
-  font-size: clamp(4rem, 8vw, 7.5rem); font-weight: 800; line-height: 0.95; margin-bottom: 2rem; letter-spacing: -2px; text-transform: uppercase;
-}
-.hero-title span { display: block; } /* For clip path per line */
-
-.hero-desc {
-  font-size: clamp(1.2rem, 2vw, 1.5rem); line-height: 1.6; max-width: 650px; opacity: 0.9; margin-bottom: 3.5rem; font-weight: 400;
-}
-
-.hero-actions .flex-gap {
-  display: flex; align-items: center; gap: 2rem;
-}
-
-.btn-premium {
-  background: white; color: var(--color-primary); padding: 1.2rem 3rem; font-size: 1.1rem; font-weight: 800; text-transform: uppercase; border-radius: 100px; transition: transform 0.3s, box-shadow 0.3s;
-}
-.btn-premium:hover {
-  transform: translateY(-5px); box-shadow: 0 15px 30px rgba(255,255,255,0.2);
-}
-
-.play-btn-circle {
-  width: 60px; height: 60px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); transition: all 0.3s; cursor: none;
-}
-.play-btn-circle:hover { background: white; color: var(--color-primary); transform: scale(1.1); }
-.play-label { font-weight: 600; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;}
-
-.hero-bottom {
-  position: absolute; bottom: 0; left: 0; width: 100%; padding: 2rem 0; z-index: 10; border-top: 1px solid rgba(255,255,255,0.1);
-}
-.bottom-flex { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 600; letter-spacing: 2px;}
-.social-links-minimal { display: flex; gap: 2rem;}
-.social-links-minimal a { opacity: 0.7; transition: opacity 0.3s; } .social-links-minimal a:hover { opacity: 1; }
-.scroll-mouse { position: relative; }
-.scroll-mouse .wheel { width: 2px; height: 15px; background: white; animation: scrollAnim 1.5s infinite ease-in-out; }
-@keyframes scrollAnim { 0% { transform: translateY(-5px); opacity: 0;} 50% { transform: translateY(5px); opacity: 1;} 100% { transform: translateY(15px); opacity: 0;} }
-.club-est { opacity: 0.7; text-align: right;}
-
-
-/* 2. ESTADÍSTICAS DESTACADAS */
-.stats-section {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #1a4d2e 100%);
-  color: white;
-  padding: 6rem 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.stats-section::before {
-  content: '';
+.hero__bg {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05) 0%, transparent 50%);
-  pointer-events: none;
+  inset: -15%;
+  width: 130%;
+  height: 130%;
+  background: url('/images/fondo.jpeg') center / cover no-repeat;
+  will-change: transform;
+  z-index: 0;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 3rem;
-  position: relative;
+.hero__gradient {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(105deg, rgba(6,17,10,0.92) 0%, rgba(6,17,10,0.5) 55%, rgba(6,17,10,0.2) 100%);
   z-index: 1;
 }
 
-.stat-card {
-  text-align: center;
-  padding: 2rem;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.1);
-  transition: all 0.3s ease;
+.hero__content {
+  position: relative;
+  z-index: 10;
+  max-width: 760px;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1s ease 0.2s, transform 1s cubic-bezier(0.2,0.8,0.2,1) 0.2s;
+}
+.hero__content--visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.stat-card:hover {
-  background: rgba(255,255,255,0.1);
-  transform: translateY(-5px);
-  border-color: rgba(255,255,255,0.3);
+.hero__tag {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 100px;
+  padding: 0.4rem 1.2rem;
+  margin-bottom: 1.8rem;
+  backdrop-filter: blur(6px);
+  color: rgba(255,255,255,0.85);
 }
 
-.stat-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.stat-number {
-  font-size: 2.5rem;
+.hero__title {
+  font-size: clamp(3.2rem, 7.5vw, 6.5rem);
   font-weight: 800;
-  margin-bottom: 0.5rem;
-  letter-spacing: -1px;
+  line-height: 1.0;
+  letter-spacing: -2px;
+  margin-bottom: 1.8rem;
+  text-transform: uppercase;
+}
+.hero__title em {
+  font-style: normal;
+  color: var(--color-accent);
 }
 
-.stat-label {
-  font-size: 1rem;
-  opacity: 0.9;
-  font-weight: 600;
+.hero__desc {
+  font-size: clamp(1rem, 1.8vw, 1.25rem);
+  line-height: 1.7;
+  color: rgba(255,255,255,0.8);
+  max-width: 540px;
+  margin-bottom: 2.8rem;
+  font-weight: 400;
 }
 
-/* 3. INFINITE MARQUEE STRIP -->
-.marquee-strip {
-  background: var(--color-primary); color: white; padding: 1.5rem 0; overflow: hidden; display: flex; align-items: center;
-}
-.marquee-scroll {
-  display: flex; width: max-content; animation: slideText 20s linear infinite;
-}
-.marquee-text {
-  font-size: 1.2rem; font-weight: 800; letter-spacing: 4px; padding-right: 2rem; white-space: nowrap;
-}
-@keyframes slideText { 100% { transform: translateX(-50%); } }
-
-
-/* 3. PHILOSOPHY / AWWWARDS SPLIT */
-.section { padding: 8rem 0; }
-.split-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 6rem; align-items: start; }
-
-.huge-title { font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 800; line-height: 1; color: var(--color-primary); letter-spacing: -2px;}
-.magnetic-btn {
-  display: inline-flex; align-items: center; justify-content: center; width: 150px; height: 150px; border-radius: 50%;
-  background: var(--color-accent); color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-  text-align: center; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.magnetic-btn:hover { transform: scale(1.1) rotate(-10deg); }
-
-.feat-row {
-  border-top: 1px solid rgba(0,0,0,0.1); padding: 3rem 0; display: flex; gap: 3rem;
-}
-.feat-row:last-child { border-bottom: 1px solid rgba(0,0,0,0.1); }
-.feat-num { font-size: 1.2rem; font-weight: 800; color: var(--color-accent); font-family: monospace;}
-.feat-title { font-size: 2rem; font-weight: 700; color: var(--color-text-dark); margin-bottom: 1rem;}
-.feat-text { font-size: 1.2rem; color: var(--color-text-muted); line-height: 1.6;}
-
-
-/* 4. PREMIUM EXPEDITIONS GRID */
-.flex-headline { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--color-text-dark); padding-bottom: 2rem;}
-.section-title { font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.1; letter-spacing: -1px; color: var(--color-primary); }
-
-.circle-link-btn {
-  display: flex; align-items: center; justify-content: center; width: 120px; height: 120px; border-radius: 50%; border: 1px solid var(--color-primary); color: var(--color-primary); font-weight: 700; text-align: center; line-height: 1.2; transition: all 0.3s;
-}
-.circle-link-btn:hover { background: var(--color-primary); color: white; transform: scale(1.05); }
-
-.premium-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: 4rem 3rem;
-}
-.premium-card { cursor: none; } /* Relies on custom cursor play button */
-
-.img-zoom-wrapper {
-  position: relative; border-radius: var(--radius-lg); overflow: hidden; height: 500px;
-}
-.img-zoom-wrapper:hover .img-zoom { transform: scale(1.08); }
-.img-zoom {
-  width: 100%; height: 100%; object-fit: cover; transition: transform 1s cubic-bezier(0.2, 1, 0.3, 1);
-}
-.card-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.2); transition: background 0.5s; }
-.img-zoom-wrapper:hover .card-overlay { background: rgba(0,0,0,0.1); }
-
-.card-badges {
-  position: absolute; top: 2rem; left: 2rem; display: flex; gap: 1rem; z-index: 2;
-}
-.pill-primary { background: var(--color-accent); color: white; padding: 0.5rem 1.2rem; border-radius: 100px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase;}
-.pill-outline { background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; padding: 0.5rem 1.2rem; border-radius: 100px; border: 1px solid white; font-weight: 800; font-size: 0.8rem; text-transform: uppercase;}
-
-.card-meta { display: flex; flex-direction: column; gap: 0.5rem; }
-.card-date { color: var(--color-text-muted); font-size: 1rem; font-weight: 600; }
-.card-title { font-size: 2rem; font-weight: 700; color: var(--color-text-dark); transition: color 0.3s; }
-.premium-card:hover .card-title { color: var(--color-accent); }
-
-.card-details {
-  display: flex;
-  gap: 2rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(0,0,0,0.1);
-}
-
-.detail-item {
+.hero__cta {
   display: flex;
   align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.btn-hero-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--color-accent);
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.95rem 2.2rem;
+  border-radius: 100px;
+  transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+}
+.btn-hero-primary:hover {
+  transform: translateY(-3px);
+  background: #ea580c;
+  box-shadow: 0 12px 28px rgba(249,115,22,0.35);
+}
+
+.btn-hero-ghost {
+  display: inline-flex;
+  align-items: center;
   gap: 0.5rem;
-  font-size: 0.95rem;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.95rem 2rem;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 100px;
+  transition: border-color 0.3s, background 0.3s;
+}
+.btn-hero-ghost:hover {
+  border-color: white;
+  background: rgba(255,255,255,0.08);
+}
+
+/* scroll hint */
+.hero__scroll {
+  margin-top: 3.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+.hero__scroll-line {
+  width: 40px;
+  height: 1px;
+  background: rgba(255,255,255,0.3);
+  position: relative;
+  overflow: hidden;
+}
+.hero__scroll-line::after {
+  content: '';
+  position: absolute;
+  left: -100%;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-accent);
+  animation: scrollLine 2s ease-in-out infinite;
+}
+@keyframes scrollLine {
+  0%   { left: -100%; }
+  50%  { left: 0%; }
+  100% { left: 100%; }
+}
+
+/* floating badge */
+.hero__badge {
+  position: absolute;
+  bottom: 3rem;
+  right: 3rem;
+  z-index: 10;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 1rem;
+  padding: 0.8rem 1.2rem;
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.hero__badge-num {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.5);
+}
+.hero__badge-year {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: white;
+}
+
+/* social strip */
+.hero__social {
+  position: absolute;
+  left: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.hero__social a {
+  color: rgba(255,255,255,0.5);
+  transition: color 0.3s;
+  writing-mode: vertical-rl;
+}
+.hero__social a:hover { color: white; }
+.hero__social-line {
+  width: 1px;
+  height: 40px;
+  background: rgba(255,255,255,0.2);
+}
+
+/* ─────────────────────────────────────────
+   MARQUEE
+───────────────────────────────────────── */
+.marquee {
+  background: var(--color-primary);
+  overflow: hidden;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.marquee__track {
+  display: flex;
+  width: max-content;
+  animation: marquee 22s linear infinite;
+}
+.marquee__item {
+  color: rgba(255,255,255,0.55);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 0 1rem;
+  white-space: nowrap;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ─────────────────────────────────────────
+   STATS
+───────────────────────────────────────── */
+.stats {
+  padding: 5rem 0;
+  background: var(--color-bg-light);
+}
+.stats__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+.stats__item {
+  background: white;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 1.2rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.7s ease, translate 0.7s ease;
+}
+.stats__item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 40px rgba(18,53,36,0.1);
+}
+.stats__icon { font-size: 2rem; display: block; margin-bottom: 0.8rem; }
+.stats__num  {
+  display: block;
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+.stats__label {
+  font-size: 0.85rem;
   color: var(--color-text-muted);
   font-weight: 600;
 }
 
-.detail-item svg {
-  color: var(--color-accent);
+/* ─────────────────────────────────────────
+   FILOSOFÍA
+───────────────────────────────────────── */
+.philosophy {
+  padding: 7rem 0;
+  background: white;
+}
+.philosophy__layout {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 6rem;
+  align-items: start;
+}
+.philosophy__left {
+  position: sticky;
+  top: 7rem;
+}
+.philosophy__title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--color-primary);
+  letter-spacing: -1.5px;
+  margin-bottom: 1.2rem;
+}
+.philosophy__sub {
+  color: var(--color-text-muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+  max-width: 300px;
 }
 
+.btn-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+  line-height: 1.3;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: transform 0.4s cubic-bezier(0.2,0.8,0.2,1), background 0.3s;
+}
+.btn-circle:hover {
+  transform: scale(1.08) rotate(-8deg);
+  background: var(--color-accent);
+}
 
-/* 5. TEAM / GUIDES */
-.team-section .section-desc { font-size: 1.2rem; color: var(--color-text-muted); line-height: 1.6;}
-.team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem; }
-.member-avatar { width: 100%; aspect-ratio: 1/1; border-radius: 50%; overflow: hidden; margin-bottom: 2rem; position: relative; }
-.member-avatar img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%); transition: all 0.5s ease;}
-.team-member:hover .member-avatar img { filter: grayscale(0%); transform: scale(1.05); }
+.feat {
+  padding: 2rem 0;
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+.feat:last-child { border-bottom: 1px solid rgba(0,0,0,0.08); }
 
-.expeditions-badge {
+.feat__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+.feat__icon { font-size: 1.8rem; }
+.feat__num  {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+.feat__title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin-bottom: 0.6rem;
+}
+.feat__text {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}
+
+/* ─────────────────────────────────────────
+   RUTAS DESTACADAS
+───────────────────────────────────────── */
+.routes-section {
+  padding: 7rem 0;
+  background: var(--color-bg-light);
+}
+
+.routes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.route-card {
+  background: white;
+  border-radius: 1.2rem;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  display: flex;
+  flex-direction: column;
+}
+.route-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+}
+
+.route-card__img-wrap {
+  position: relative;
+  height: 240px;
+  overflow: hidden;
+}
+.route-card__img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s ease;
+}
+.route-card:hover .route-card__img-wrap img {
+  transform: scale(1.07);
+}
+.route-card__overlay {
+  position: absolute;
+  inset: 0;
+}
+.route-card__type {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.8rem;
+  border-radius: 100px;
+}
+
+.route-card__body {
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.route-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+.route-card__date {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+.route-card__diff {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.7rem;
+  border-radius: 100px;
+}
+.diff--difícil   { background: #fee2e2; color: #dc2626; }
+.diff--moderado  { background: #fef3c7; color: #d97706; }
+.diff--fácil     { background: #d1fae5; color: #059669; }
+
+.route-card__title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin-bottom: 0.2rem;
+  line-height: 1.2;
+}
+.route-card__sub {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1rem;
+}
+.route-card__details {
+  display: flex;
+  gap: 1.2rem;
+  margin-bottom: 1.4rem;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+.route-card__details span {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.route-card__details svg { color: var(--color-accent); flex-shrink: 0; }
+
+.route-card__cta {
+  margin-top: auto;
+  display: block;
+  text-align: center;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.8rem;
+  border-radius: 0.8rem;
+  transition: background 0.3s, transform 0.3s;
+}
+.route-card__cta:hover {
+  background: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+/* ─────────────────────────────────────────
+   GALERÍA BENTO
+───────────────────────────────────────── */
+.gallery-preview {
+  padding: 7rem 0;
+  background: white;
+}
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 260px 200px;
+  gap: 1rem;
+}
+
+.bento__item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  cursor: pointer;
+  display: block;
+}
+.bento__item--0 { grid-column: span 2; grid-row: span 2; }
+.bento__item--1 { grid-column: span 2; }
+.bento__item--2 { grid-column: span 1; }
+.bento__item--3 { grid-column: span 1; }
+
+.bento__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.bento__item:hover img { transform: scale(1.07); }
+
+.bento__label {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  padding: 2rem 1.2rem 1rem;
+  background: linear-gradient(to top, rgba(6,17,10,0.8), transparent);
   color: white;
-  padding: 1rem;
-  text-align: center;
+  font-size: 0.8rem;
   font-weight: 700;
-  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transform: translateY(8px);
+  transition: opacity 0.3s, transform 0.3s;
 }
-
-.team-member:hover .expeditions-badge {
+.bento__item:hover .bento__label {
   opacity: 1;
-}
-
-.member-name { font-size: 1.8rem; font-weight: 800; color: var(--color-primary); }
-.member-role { font-size: 1.1rem; color: var(--color-text-muted); margin-top: 0.5rem; }
-
-
-/* 6. MASSIVE CTA / IMMERSIVE VIDEO PLACEHOLDER */
-.massive-cta {
-  position: relative; min-height: 90vh; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: none;
-}
-.cta-parallax-bg {
-  position: absolute; top: -20%; left: 0; width: 100%; height: 150%;
-  background-image: url('/images/route_green.png'); background-size: cover; background-position: center; z-index: 0; will-change: transform; filter: brightness(0.8);
-}
-.cta-overlay-dark { position: absolute; inset: 0; background: rgba(6,17,10, 0.8); z-index: 1; }
-.cta-flex { position: relative; z-index: 10; text-align: center; }
-
-.massive-title { font-size: clamp(3rem, 7vw, 6rem); color: white; font-weight: 800; line-height: 1.05; letter-spacing: -2px; }
-.email-capture {
-  display: flex; max-width: 600px; margin: 0 auto; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 1rem; transition: border 0.3s;
-}
-.email-capture:focus-within { border-color: white; }
-.email-capture input {
-  flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 1.5rem; padding: 0.5rem;
-}
-.email-capture input::placeholder { color: rgba(255,255,255,0.4); }
-.submit-arrow {
-  background: transparent; border: none; color: white; font-size: 2rem; cursor: pointer; transition: transform 0.3s;
-}
-.email-capture:focus-within .submit-arrow { transform: translateX(10px); color: var(--color-accent); }
-
-
-/* ---------------------------------
-   ADVANCED REVEAL ANIMATIONS 
-   --------------------------------*/
-.reveal-trigger {
-  /* Invisible boundary to observe */
-}
-.reveal-item { opacity: 0; will-change: transform, opacity, clip-path; }
-
-/* Clip-path reveal for ultra-premium text feel */
-.slide-up-clip {
-  transform: translateY(100%);
-  clip-path: inset(0 0 100% 0);
-  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1), clip-path 1s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.is-revealed .slide-up-clip {
   transform: translateY(0);
-  clip-path: inset(-20% 0 -20% 0); /* bleed out to prevent clipping shadows */
-  opacity: 1;
 }
 
-/* Stagger lines */
-.is-revealed .line-1 { transition-delay: 0.1s; }
-.is-revealed .line-2 { transition-delay: 0.25s; }
-.is-revealed .line-3 { transition-delay: 0.4s; }
-
-.fade-in {
-  transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+/* ─────────────────────────────────────────
+   CTA FINAL
+───────────────────────────────────────── */
+.cta-section {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
 }
-.is-revealed .fade-in { opacity: 1; transform: translateY(0); }
 
-.delay-200 { transition-delay: 0.2s; }
-.delay-400 { transition-delay: 0.4s; }
-.delay-800 { transition-delay: 0.8s; }
-.delay-1000 { transition-delay: 1s; }
-.delay-1200 { transition-delay: 1.2s; }
+/* ── Collage de tiras verticales ── */
+.cta-collage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  z-index: 0;
+  gap: 3px;
+}
+.cta-collage__strip {
+  flex: 1;
+  background-size: cover;
+  background-position: center top;
+  will-change: transform;
+  /* escala extra para evitar bordes blancos durante parallax */
+  transform-origin: center center;
+  scale: 1.15;
+}
 
-/* RESPONSIVE DESIGNS */
+/* Overlay: izquierda muy oscuro, derecha semitransparente */
+.cta-section__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    105deg,
+    rgba(6,17,10,0.97) 0%,
+    rgba(6,17,10,0.90) 35%,
+    rgba(6,17,10,0.60) 65%,
+    rgba(6,17,10,0.75) 100%
+  );
+}
+
+/* ── Layout interno ── */
+.cta-section__inner {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: center;
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}
+
+/* ── Izquierda: texto ── */
+.cta-section__left { color: white; }
+
+.cta-section__tag-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  background: rgba(249,115,22,0.15);
+  border: 1px solid rgba(249,115,22,0.3);
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+  margin-bottom: 1.8rem;
+}
+
+.cta-section__title {
+  font-size: clamp(2.4rem, 4.5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+  margin-bottom: 3rem;
+}
+.cta-section__title em {
+  font-style: normal;
+  color: var(--color-accent);
+}
+
+.cta-section__stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.cta-stat { display: flex; flex-direction: column; gap: 0.2rem; }
+.cta-stat strong {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.cta-stat span {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  font-weight: 500;
+}
+.cta-stat-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+
+/* ── Derecha: card ── */
+.cta-card {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.13);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  color: white;
+}
+.cta-card__icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+.cta-card__title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem; }
+.cta-card__desc {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.65;
+  margin-bottom: 2rem;
+}
+
+/* WhatsApp button */
+.cta-card__whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  width: 100%;
+  background: #25D366;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 1rem 1.5rem;
+  border-radius: 0.9rem;
+  margin-bottom: 0.75rem;
+  transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 8px 24px rgba(37,211,102,0.25);
+}
+.cta-card__whatsapp:hover {
+  background: #1ebe5d;
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(37,211,102,0.35);
+}
+
+.cta-card__hint {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.3);
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.cta-card__social {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.35);
+}
+.cta-card__social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: rgba(255,255,255,0.65);
+  font-weight: 600;
+  font-size: 0.82rem;
+  transition: color 0.3s;
+}
+.cta-card__social-link:hover { color: var(--color-accent); }
+
+/* ─────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .split-layout { grid-template-columns: 1fr; gap: 4rem; }
-  .huge-title { br { display: none; } }
-  .magnetic-btn { width: 120px; height: 120px; margin-top: 2rem !important; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+  .stats__grid { grid-template-columns: repeat(2, 1fr); }
+  .routes-grid { grid-template-columns: repeat(2, 1fr); }
+  .philosophy__layout { grid-template-columns: 1fr; gap: 3rem; }
+  .philosophy__left { position: static; }
+  .bento { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; }
+  .bento__item--0 { grid-column: span 2; height: 280px; }
+  .bento__item--1,
+  .bento__item--2,
+  .bento__item--3 { grid-column: span 1; height: 200px; }
+  .cta-section__inner { grid-template-columns: 1fr; gap: 3rem; }
 }
+
 @media (max-width: 768px) {
-  .hero-actions .flex-gap { flex-direction: column; align-items: flex-start; }
-  .premium-grid { grid-template-columns: 1fr; }
-  .img-zoom-wrapper { height: 400px; }
-  .team-grid { grid-template-columns: 1fr; gap: 4rem; }
-  .member-avatar { max-width: 250px; margin: 0 auto 2rem; }
-  .hero-bottom { display: none; } /* simplify mobile */
-  .feat-row { flex-direction: column; gap: 1rem; }
-  .custom-cursor { display: none !important; } /* No custom cursor on mobile */
-  .premium-card, .massive-cta { cursor: auto; }
-  .stats-grid { grid-template-columns: 1fr; gap: 1.5rem; }
-  .stat-card { padding: 1.5rem; }
-  .stat-number { font-size: 2rem; }
-  .card-details { flex-direction: column; gap: 1rem; }
+  .hero__social { display: none; }
+  .hero__badge  { display: none; }
+  .hero__title  { letter-spacing: -1px; }
+  .stats__grid  { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .routes-grid  { grid-template-columns: 1fr; }
+  .bento { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .bento__item--0,
+  .bento__item--1,
+  .bento__item--2,
+  .bento__item--3 { grid-column: span 1; height: 220px; }
+  .section-header { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+  .cta-section__stats { flex-wrap: wrap; gap: 1rem; }
+  .cta-collage { gap: 2px; }
+}
+
+@media (max-width: 480px) {
+  .hero__cta { flex-direction: column; align-items: flex-start; }
+  .stats__grid { grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  .stats__item { padding: 1.4rem 1rem; }
+  .stats__num { font-size: 1.8rem; }
+  .cta-section__inner { padding-top: 4rem; padding-bottom: 4rem; }
 }
 </style>

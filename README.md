@@ -71,13 +71,9 @@ npm run dev
 - URLs de redes sociales
 - Modo mantenimiento
 
-## 🔐 Credenciales Supabase
 
 ```
-Proyecto: clubcabritas
-URL: https://orxyjpeanhscwzajpbkw.supabase.co
-Public Key: sb_publishable_pjPw6lNkt6GHf-LyTQMf3w_rhsMyk85sb
-Contraseña: clubcabritabdname
+
 ```
 
 ## 📊 Tablas de Base de Datos

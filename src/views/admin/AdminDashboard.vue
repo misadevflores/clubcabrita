@@ -212,6 +212,54 @@
         </label>
         <button type="submit" class="btn-success">Guardar Configuración</button>
       </form>
+
+      <!-- Logo upload section -->
+      <div class="logo-section">
+        <h3>Logos del Sitio</h3>
+        <p class="section-hint">Sube un logo para escritorio y otro para móvil. Recomendado: PNG con fondo transparente.</p>
+        
+        <div class="logo-upload-grid">
+          <!-- Desktop Logo -->
+          <div class="logo-upload-card">
+            <h4>Logo Escritorio</h4>
+            <div class="logo-preview-box">
+              <img v-if="logoDesktopPreview || settings.logo_desktop" 
+                   :src="logoDesktopPreview || settings.logo_desktop" 
+                   alt="Logo escritorio" 
+                   class="logo-preview-img" />
+              <span v-else class="logo-placeholder">Sin logo</span>
+            </div>
+            <label for="logo-desktop-input" class="file-label mt-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Seleccionar
+            </label>
+            <input id="logo-desktop-input" type="file" class="file-input" accept="image/*" @change="onLogoDesktopChange" />
+            <button v-if="logoDesktopFile" @click="uploadLogoDesktop" class="btn-success mt-2" :disabled="uploadingLogoDesktop">
+              {{ uploadingLogoDesktop ? 'Subiendo...' : 'Guardar logo escritorio' }}
+            </button>
+          </div>
+
+          <!-- Mobile Logo -->
+          <div class="logo-upload-card">
+            <h4>Logo Móvil</h4>
+            <div class="logo-preview-box">
+              <img v-if="logoMobilePreview || settings.logo_mobile" 
+                   :src="logoMobilePreview || settings.logo_mobile" 
+                   alt="Logo móvil" 
+                   class="logo-preview-img" />
+              <span v-else class="logo-placeholder">Sin logo</span>
+            </div>
+            <label for="logo-mobile-input" class="file-label mt-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Seleccionar
+            </label>
+            <input id="logo-mobile-input" type="file" class="file-input" accept="image/*" @change="onLogoMobileChange" />
+            <button v-if="logoMobileFile" @click="uploadLogoMobile" class="btn-success mt-2" :disabled="uploadingLogoMobile">
+              {{ uploadingLogoMobile ? 'Subiendo...' : 'Guardar logo móvil' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -219,10 +267,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/store/auth'
+import { useSettingsStore } from '@/store/settings'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const auth = useAuthStore()
+const settingsStore = useSettingsStore()
 
 const activeTab = ref('Rutas')
 const tabs = ['Rutas', 'Galería', 'Eventos', 'Mensajes', 'Página Principal', 'Configuración']
@@ -259,8 +309,19 @@ const settings = ref({
   facebook_url: '',
   instagram_url: '',
   twitter_url: '',
-  maintenance_mode: false
+  maintenance_mode: false,
+  logo_desktop: '',
+  logo_mobile: ''
 })
+
+// Logo upload state
+const logoDesktopFile = ref<File | null>(null)
+const logoDesktopPreview = ref('')
+const uploadingLogoDesktop = ref(false)
+
+const logoMobileFile = ref<File | null>(null)
+const logoMobilePreview = ref('')
+const uploadingLogoMobile = ref(false)
 
 const logout = () => {
   auth.logout()
@@ -608,6 +669,57 @@ const fetchSettings = async () => {
     settings.value = { ...settings.value, ...data }
   } catch (err) {
     console.error('Error fetching settings:', err)
+  }
+}
+
+// LOGO FUNCTIONS
+const onLogoDesktopChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (file) {
+    logoDesktopFile.value = file
+    const reader = new FileReader()
+    reader.onload = (ev) => { logoDesktopPreview.value = ev.target?.result as string }
+    reader.readAsDataURL(file)
+  }
+}
+
+const onLogoMobileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (file) {
+    logoMobileFile.value = file
+    const reader = new FileReader()
+    reader.onload = (ev) => { logoMobilePreview.value = ev.target?.result as string }
+    reader.readAsDataURL(file)
+  }
+}
+
+const uploadLogoDesktop = async () => {
+  if (!logoDesktopFile.value) return
+  uploadingLogoDesktop.value = true
+  try {
+    const url = await settingsStore.uploadLogo(logoDesktopFile.value, 'logo_desktop', auth.token!)
+    settings.value.logo_desktop = url
+    logoDesktopFile.value = null
+    alert('✓ Logo escritorio guardado')
+  } catch (err: any) {
+    alert('Error: ' + err.message)
+  } finally {
+    uploadingLogoDesktop.value = false
+  }
+}
+
+const uploadLogoMobile = async () => {
+  if (!logoMobileFile.value) return
+  uploadingLogoMobile.value = true
+  try {
+    const url = await settingsStore.uploadLogo(logoMobileFile.value, 'logo_mobile', auth.token!)
+    settings.value.logo_mobile = url
+    logoMobileFile.value = null
+    alert('✓ Logo móvil guardado')
+  } catch (err: any) {
+    alert('Error: ' + err.message)
+  } finally {
+    uploadingLogoMobile.value = false
   }
 }
 
@@ -1056,6 +1168,89 @@ onMounted(() => {
 
   .items-grid,
   .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Logo Upload Section ── */
+.logo-section {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.logo-section h3 {
+  margin: 0 0 6px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.section-hint {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 20px 0;
+}
+
+.logo-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.logo-upload-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-upload-card h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #333;
+  font-weight: 600;
+}
+
+.logo-preview-box {
+  width: 100%;
+  height: 100px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px dashed #ccc;
+}
+
+.logo-preview-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.logo-placeholder {
+  color: #aaa;
+  font-size: 13px;
+}
+
+.mt-2 { margin-top: 8px; }
+
+.logo-upload-card .btn-success {
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 13px;
+  grid-column: unset;
+}
+
+@media (max-width: 600px) {
+  .logo-upload-grid {
     grid-template-columns: 1fr;
   }
 }

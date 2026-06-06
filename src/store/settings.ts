@@ -1,7 +1,5 @@
 import { ref } from 'vue'
 
-const API_URL = 'http://localhost:3000/api'
-
 export const useSettingsStore = () => {
     const settings = ref<Record<string, string>>({})
     const isLoading = ref(false)
@@ -9,36 +7,32 @@ export const useSettingsStore = () => {
     const loadSettings = async () => {
         isLoading.value = true
         try {
-            const response = await fetch(`${API_URL}/settings`)
+            const response = await fetch('/api/settings')
             if (response.ok) {
                 const data = await response.json()
                 settings.value = data || {}
                 applyStyles()
             }
         } catch (e) {
-            console.error("Error loading settings:", e)
+            console.error('Error loading settings:', e)
         } finally {
             isLoading.value = false
         }
     }
 
     const applyStyles = () => {
-        // Apply CSS variables to root to globally override colors
-        const root = document.documentElement;
-        if (settings.value.color_primary) {
-            root.style.setProperty('--color-primary', settings.value.color_primary);
-        }
+        const root = document.documentElement
+        if (settings.value.color_primary)
+            root.style.setProperty('--color-primary', settings.value.color_primary)
         if (settings.value.color_accent) {
-            root.style.setProperty('--color-accent', settings.value.color_accent);
-            root.style.setProperty('--color-accent-hover', adjustColorBright(settings.value.color_accent, -15));
+            root.style.setProperty('--color-accent', settings.value.color_accent)
+            root.style.setProperty('--color-accent-hover', adjustColor(settings.value.color_accent, -15))
         }
-        if (settings.value.font_family) {
-            root.style.setProperty('--font-main', settings.value.font_family);
-        }
+        if (settings.value.font_family)
+            root.style.setProperty('--font-main', settings.value.font_family)
     }
 
-    // Helper for hover colors
-    const adjustColorBright = (hex: string, percent: number) => {
+    const adjustColor = (hex: string, percent: number): string => {
         let r = parseInt(hex.substring(1, 3), 16)
         let g = parseInt(hex.substring(3, 5), 16)
         let b = parseInt(hex.substring(5, 7), 16)
@@ -48,30 +42,61 @@ export const useSettingsStore = () => {
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
     }
 
-    const saveSettings = async (newSettings: Record<string, string>, token: string) => {
+    const saveSettings = async (newSettings: Record<string, string | boolean>, token: string) => {
         try {
-            const response = await fetch(`${API_URL}/settings`, {
+            // Convert booleans to strings for consistency
+            const normalized: Record<string, string> = {}
+            for (const [k, v] of Object.entries(newSettings)) {
+                normalized[k] = String(v)
+            }
+            const response = await fetch('/api/settings', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(newSettings)
-            });
-            if (response.ok) {
-                await loadSettings()
-            } else {
-                throw new Error("Failed to save settings")
-            }
+                body: JSON.stringify(normalized)
+            })
+            if (!response.ok) throw new Error('Failed to save settings')
+            await loadSettings()
         } catch (e) {
-            console.error("Error saving settings:", e)
+            console.error('Error saving settings:', e)
+            throw e
         }
+    }
+
+    /**
+     * Upload a logo file and save the URL to settings.
+     * @param file  The image file to upload
+     * @param type  'logo_desktop' | 'logo_mobile'
+     * @param token JWT token
+     * @returns     The uploaded image URL
+     */
+    const uploadLogo = async (file: File, type: 'logo_desktop' | 'logo_mobile', token: string): Promise<string> => {
+        const formData = new FormData()
+        formData.append('logo', file)
+        formData.append('logo_type', type)
+
+        const response = await fetch('/api/settings/upload-logo', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        })
+        if (!response.ok) {
+            const err = await response.json()
+            throw new Error(err.message || 'Upload failed')
+        }
+        const data = await response.json()
+        // Refresh settings so the new logo is applied everywhere
+        await loadSettings()
+        return data.url
     }
 
     return {
         settings,
         isLoading,
         loadSettings,
-        saveSettings
+        saveSettings,
+        uploadLogo
     }
 }

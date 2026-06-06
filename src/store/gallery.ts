@@ -1,14 +1,15 @@
 import { ref } from 'vue'
+import { useAuthStore } from './auth'
 
 export interface GalleryItem {
     id: number
-    url: string
     title: string
-    location: string
-    span_class: string
+    image: string
+    description: string
+    category: string
+    display_order: number
+    is_published: boolean
 }
-
-const API_URL = 'http://localhost:3000/api'
 
 export const useGalleryStore = () => {
     const images = ref<GalleryItem[]>([])
@@ -17,51 +18,70 @@ export const useGalleryStore = () => {
     const loadGallery = async () => {
         isLoading.value = true
         try {
-            const response = await fetch(`${API_URL}/gallery`)
+            const response = await fetch('/api/gallery')
             if (response.ok) {
-                const data = await response.json()
-                images.value = data || []
+                images.value = await response.json() || []
             }
         } catch (e) {
-            console.error("Error loading gallery:", e)
+            console.error('Error loading gallery:', e)
         } finally {
             isLoading.value = false
         }
     }
 
-    const addGalleryImage = async (image: Omit<GalleryItem, 'id'>, token: string) => {
+    const addGalleryImage = async (formData: FormData): Promise<boolean> => {
         try {
-            const response = await fetch(`${API_URL}/gallery`, {
+            const { token } = useAuthStore()
+            const response = await fetch('/api/gallery', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(image)
-            });
+                headers: { 'Authorization': `Bearer ${token.value}` },
+                body: formData
+            })
             if (response.ok) {
                 await loadGallery()
-            } else {
-                console.error("Failed to add image.")
+                return true
             }
+            return false
         } catch (e) {
-            console.error("Error saving gallery:", e)
+            console.error('Error adding gallery image:', e)
+            return false
         }
     }
 
-    const deleteGalleryImage = async (id: number, token: string) => {
+    const updateGalleryImage = async (id: number, formData: FormData): Promise<boolean> => {
         try {
-            const response = await fetch(`${API_URL}/gallery/${id}`, {
+            const { token } = useAuthStore()
+            const response = await fetch(`/api/gallery/${id}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token.value}` },
+                body: formData
+            })
+            if (response.ok) {
+                await loadGallery()
+                return true
+            }
+            return false
+        } catch (e) {
+            console.error('Error updating gallery image:', e)
+            return false
+        }
+    }
+
+    const deleteGalleryImage = async (id: number): Promise<boolean> => {
+        try {
+            const { token } = useAuthStore()
+            const response = await fetch(`/api/gallery/${id}`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+                headers: { 'Authorization': `Bearer ${token.value}` }
+            })
             if (response.ok) {
                 images.value = images.value.filter(i => i.id !== id)
+                return true
             }
+            return false
         } catch (e) {
-            console.error("Error deleting gallery:", e)
+            console.error('Error deleting gallery image:', e)
+            return false
         }
     }
 
@@ -70,6 +90,7 @@ export const useGalleryStore = () => {
         isLoading,
         loadGallery,
         addGalleryImage,
+        updateGalleryImage,
         deleteGalleryImage
     }
 }
