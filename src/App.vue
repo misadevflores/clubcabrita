@@ -4,6 +4,10 @@ import { RouterLink, RouterView } from 'vue-router'
 import { useSettingsStore } from './store/settings'
 import { useAuthStore } from './store/auth'
 
+import { supabase } from '../utils/supabase'
+
+const todos = ref([])
+
 const { settings, loadSettings } = useSettingsStore()
 const { isAuthenticated, logout } = useAuthStore()
 
@@ -12,6 +16,7 @@ const menuOpen = ref(false)
 // Dynamic logos: fall back to static files if not set in settings
 const logoDesktop = computed(() => settings.value.logo_desktop || '/images/clubcabritas.png')
 const logoMobile  = computed(() => settings.value.logo_mobile  || '/images/logo.png')
+
 
 function toggleMenu() {
   menuOpen.value = !menuOpen.value
@@ -37,6 +42,9 @@ onMounted(async () => {
           <img :src="logoMobile" alt="Club Cabritas" class="logo-img logo-mobile" />
         </RouterLink>
       </div>
+
+
+
 
       <!-- Desktop Navigation -->
       <nav class="nav-links desktop-only">
