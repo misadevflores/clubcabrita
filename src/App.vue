@@ -4,7 +4,8 @@ import { RouterLink, RouterView } from 'vue-router'
 import { useSettingsStore } from './store/settings'
 import { useAuthStore } from './store/auth'
 
-import { supabase } from '../utils/supabase'
+import { supabase } from '@/utils/supabase'
+
 
 const todos = ref([])
 
